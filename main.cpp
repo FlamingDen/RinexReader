@@ -5,6 +5,7 @@
 #include "facadedb.h"
 #include "rinexreader.h"
 
+void uploadDatatoDB(FacadeDB* db, RinexReader& rr);
 void testFacadeDB();
 
 int main(int argc, char *argv[])
@@ -14,55 +15,99 @@ int main(int argc, char *argv[])
     using Qt::endl;
 
     QString obs("C:/Utils/RinexSample/goml299o.23o");
-    QString nav("C:/Utils/RinexSample/goml299o.23n");
-    //FacadeDB* db = FacadeDB::getInstance();
-    std::ifstream inputfile(obs.toStdString());
-    if (!inputfile.is_open()) {
-        perror("Error while opening file");
-    }
-    //==============================================================================
-    // RinexReader rnxReader(obs, nav, db);
-    // rnxReader.uploadObsToDB();
-    // out << rnxReader.getRinex_type_obs() << endl;
-    // out << rnxReader.getRinex_version_obs() << endl;
-    // out << rnxReader.getDb()->getDatabase().connectionName() << endl;
-    // out << rnxReader.getDb()->getDatabase().databaseName() << endl;
-    // rnxReader.getDb()->removeAll();
-    //==============================================================================
+    QString navGPS("C:/Utils/RinexSample/goml299o.23n");
+    QString navGLO("C:/Utils/RinexSample/goml299o.23g");
+    QString navGAL("C:/Utils/RinexSample/goml299o.23l");
+    QString navBEI("C:/Utils/RinexSample/goml299o.23f");
 
+    QStringList navPaths;
+    navPaths.append(navGPS);
+    navPaths.append(navGLO);
+    navPaths.append(navGAL);
+
+    FacadeDB* db = FacadeDB::getInstance();
 
     //=============================RinexReader API=============================================
-    RinexReader rr(obs,nav);// obs + 1nav
-    RinexReader rr(obs,RinexType::OBSERVATION); // onle obs
-    RinexReader rr(nav,RinexType::NAVIGATION);  // onle nav
+    RinexReader rr(obs,navPaths);
+    RinexReader onlyObs(obs, RinexType::OBSERVATION);
+    RinexReader onlyNav(obs, RinexType::NAVIGATION);
 
-    //rr.addPath_nav(nav);
     out << "Nav info :" << endl;
-    for(const QString &s : rr.getPaths_nav())
-        out << s << endl;
+    for(const QString &s : rr.getPaths_nav()){ out << s << endl; }
     out << rr.getRinex_type_nav() << endl;
     out << rr.getRinex_version_nav() << endl << endl;
 
-    //rr.setPath_obs(obs);
     out << "Obs info :" << endl;
     out << rr.getPath_obs() << endl;
     out << rr.getRinex_type_obs() << endl;
     out << rr.getRinex_version_obs() << endl << endl;
 
-    rr.readNav();
-    rr.readObs(); // or     rr.readObsHeader(); rr.readEpochs();
+    rr.nextNav();       //navGPS;
+    rr.nextNav();       //navGLO;
+    rr.nextNav();       //navGAL;
+    rr.readNav(rr.getPaths_nav().at(1));
+    rr.readObsHeader();
 
+    RinexReader emptyRR;
+    emptyRR = rr;
+    //==============================================================================
+
+
+
+    //==============================================================================
+    //uploadDatatoDB(db, rr);
 
     rr.clearNav();
     rr.clearObs();
 
-    out << endl;
+    db->removeAll();
     //==============================================================================
 
 
-    //=============================TestFacadeDB=============================================
+
+    //=============================TestFacadeDB=====================================
     //testFacadeDB();
     //==============================================================================
+}
+
+void uploadDatatoDB(FacadeDB* db, RinexReader &rr){
+    QDateTime st = QDateTime::currentDateTime();
+
+    //===============================================================
+    QList<Rinex3Obs::ObsEpochInfo> inf = rr.getEpochs();
+    QList<Rinex3Obs::ObsEpochInfo>::Iterator listIt = inf.begin();
+    for(listIt = inf.begin(); listIt != inf.end(); ++listIt){
+        std::string obsTimeHMS = HHMMSS(listIt->epochRecord[3], listIt->epochRecord[4], listIt->epochRecord[5]);
+        std::cout << "OBS Time : " << obsTimeHMS;
+        std::map<std::string, std::map<int,std::vector<double>>>::iterator itEpoch = listIt->observations.begin();
+        for(itEpoch = listIt->observations.begin(); itEpoch != listIt->observations.end(); itEpoch++){
+            std::map<int,std::vector<double>> data = itEpoch->second;
+            std::map<int,std::vector<double>>::iterator it = data.begin();
+            for(it = data.begin(); it != data.end();it++){
+                QString code = QString(itEpoch->first.data()) + QString("%1").arg(it->first,2,10,QChar('0'));
+                std::vector<double> time = listIt->epochRecord;
+                QDateTime dt(QDate(time.at(0),time.at(1),time.at(2)),QTime(time.at(3),time.at(4),time.at(5)));
+                QList<double> qdate(it->second.begin(),it->second.end());
+
+                if(!db->isExistSL(code))
+                    db->addSatellite(code);
+                db->addData(dt,code,qdate);
+            }
+        }
+        std::cout << " + \n";
+    }
+    inf.clear();
+    //===============================================================
+
+    QDateTime finish = QDateTime::currentDateTime();
+    double min;
+    int secs, msecs;
+    secs = st.secsTo(finish);
+    st = st.addSecs(secs);
+    msecs = st.time().msecsTo(finish.time());
+    std::modf(secs / 60, &min);
+    secs -= min * 60;
+    std::cout << min <<" min. "<<secs << " sec. " << msecs << " ms."<< std::endl;
 }
 
 void testFacadeDB(){

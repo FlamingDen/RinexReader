@@ -699,3 +699,6 @@ void Rinex3Nav::clear()
     _navGLO.clear();
     _navGPS.clear();
 }
+
+
+
