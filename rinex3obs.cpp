@@ -155,6 +155,7 @@ void Rinex3Obs::obsHeader(ifstream& infile) {
     if (_Header.obsTypes.count("G") > 0) { _obsTypesGPS = _Header.obsTypes["G"]; }
     if (_Header.obsTypes.count("R") > 0) { _obsTypesGLO = _Header.obsTypes["R"]; }
     if (_Header.obsTypes.count("E") > 0) { _obsTypesGAL = _Header.obsTypes["E"]; }
+    if (_Header.obsTypes.count("C") > 0) { _obsTypesBEI = _Header.obsTypes["C"]; }
 }
 //=======================================================================================
 
@@ -211,6 +212,7 @@ void obsOrganizer(vector<string> block, Rinex3Obs::ObsEpochInfo& obs) {
     obs.numSatsGAL = 0;
     obs.numSatsGLO = 0;
     obs.numSatsGPS = 0;
+    obs.numSatsBEI = 0;
     map<string, map<int, vector<double>>>::iterator it;
     //Galileo
     it = data.find("E");
@@ -226,6 +228,11 @@ void obsOrganizer(vector<string> block, Rinex3Obs::ObsEpochInfo& obs) {
     it = data.find("G");
     if (it != data.end())
         obs.numSatsGPS = static_cast<int>(it->second.size());
+
+    //BeiDou
+    it = data.find("C");
+    if (it != data.end())
+        obs.numSatsBEI = static_cast<int>(it->second.size());
 }
 
 // Setting observation attributes for each satellite constellations
@@ -233,12 +240,14 @@ void Rinex3Obs::setObservations(map<string, map<int, vector<double>>> observatio
     if (observations.count("G") > 0) { _obsGPS.clear(); _obsGPS = observations["G"]; }
     if (observations.count("R") > 0) { _obsGLO.clear(); _obsGLO = observations["R"]; }
     if (observations.count("E") > 0) { _obsGAL.clear(); _obsGAL = observations["E"]; }
+    if (observations.count("C") > 0) { _obsBEI.clear(); _obsBEI = observations["C"]; }
 }
 
 // This function extracts and stores epochwise observations from file
-void Rinex3Obs::obsEpoch(ifstream& infile) {
+bool Rinex3Obs::obsEpoch(ifstream& infile) {
     // Rinex v3 special identifier for new epoch of observations
     const string sTokenEpoch = ">";
+    const string sTokenSAT = "OF SATELLITES";
     // Collect the block of observation lines into a vector
     int nSatsEpoch = 0; int nLinesEpoch = 0; vector<int> blockFirstLine;
     streampos pos;
@@ -255,6 +264,15 @@ void Rinex3Obs::obsEpoch(ifstream& infile) {
         getline(infile, line); nLinesEpoch++;
 
         if (line.find_first_not_of(' ') == string::npos) { continue; }
+
+        // we not read additional information at the end of the file
+        size_t found_SAT = line.find(sTokenSAT);
+        if ( found_SAT != string::npos ){
+            infile.clear();
+            infile.seekg(0,infile.end);
+            return false;
+        }
+
         // Look for special identifier in line
         size_t found_ID = line.find(sTokenEpoch);
         if ((found_ID != string::npos)) {
@@ -282,7 +300,8 @@ void Rinex3Obs::obsEpoch(ifstream& infile) {
     obsOrganizer(block, _EpochObs);
     _EpochObs.gpsTime = gpsTime(_EpochObs.epochRecord);
     // Update observation attributes
-    setObservations(_EpochObs.observations);
+    //setObservations(_EpochObs.observations);
+    return true;
 }
 //=======================================================================================
 
@@ -294,6 +313,7 @@ void Rinex3Obs::clear(Rinex3Obs::ObsEpochInfo& obs) {
     obs.numSatsGAL = NULL;
     obs.numSatsGLO = NULL;
     obs.numSatsGPS = NULL;
+    obs.numSatsBEI = NULL;
     obs.observations.clear();
     obs.recClockOffset = NULL;
     obs.gpsTime = NULL;

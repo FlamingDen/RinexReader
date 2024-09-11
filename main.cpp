@@ -47,12 +47,8 @@ int main(int argc, char *argv[])
     rr.nextNav();       //navGAL;
     rr.readNav(rr.getPaths_nav().at(1));
     rr.readObsHeader();
-
-    RinexReader emptyRR;
-    emptyRR = rr;
     //==============================================================================
-
-
+    QList<Rinex3Obs::ObsEpochInfo> inf = rr.getEpochs();
 
     //==============================================================================
     //uploadDatatoDB(db, rr);

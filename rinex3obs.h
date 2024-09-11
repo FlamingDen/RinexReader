@@ -31,12 +31,14 @@ public:
         int numSatsGPS;
         int numSatsGLO;
         int numSatsGAL;
+        int numSatsBEI;
         std::map<std::string, std::map<int, std::vector<double>>> observations;
         void clear() {
             epochRecord.clear();
             numSatsGAL = NULL;
             numSatsGLO = NULL;
             numSatsGPS = NULL;
+            numSatsBEI = NULL;
             observations.clear();
             recClockOffset = NULL;
         }
@@ -50,15 +52,17 @@ public:
     std::vector<std::string> _obsTypesGPS;
     std::vector<std::string> _obsTypesGLO;
     std::vector<std::string> _obsTypesGAL;
+    std::vector<std::string> _obsTypesBEI;
 
     // * Epoch observations mapped to PRN for ease of use
     std::map<int, std::vector<double>> _obsGPS;
     std::map<int, std::vector<double>> _obsGLO;
     std::map<int, std::vector<double>> _obsGAL;
+    std::map<int, std::vector<double>> _obsBEI;
 
     // Functions
     void obsHeader(std::ifstream& infile);
-    void obsEpoch(std::ifstream& infile);
+    bool obsEpoch(std::ifstream& infile);
     void clear(Rinex3Obs::ObsEpochInfo& obs);
     void clear(Rinex3Obs::ObsHeaderInfo& header);
     void setObservations(std::map<std::string, std::map<int, std::vector<double>>> observations);

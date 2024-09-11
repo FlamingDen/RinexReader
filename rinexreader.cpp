@@ -88,9 +88,11 @@ QList<Rinex3Obs::ObsEpochInfo> RinexReader::getEpochs()
 
         while (!(fin_obs >> std::ws).eof())
         {
-            if (fin_obs.fail()) { break; }
-            obs.obsEpoch(fin_obs);
-            epochs.append(obs._EpochObs);
+            if (fin_obs.fail())
+                break;
+            if(obs.obsEpoch(fin_obs)){
+                epochs.append(obs._EpochObs);
+            }
         }
         obs.clear(obs._EpochObs);
     }
