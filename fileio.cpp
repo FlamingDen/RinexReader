@@ -43,7 +43,7 @@ void FileIO::fileSafeOut(string output_filename, ofstream& fout) {
 }
 
 // Check Rinex File Version
-void FileIO::checkRinexVersionType(double &rinex_version, int &rinex_type, std::ifstream &fin)
+void FileIO::checkRinexVersionType(double &rinex_version, std::string &rinex_type, std::ifstream &fin)
 {
     const std::string sTokenVER = "RINEX VERSION / TYPE";
     std::string line; int nLines = 0;
@@ -68,16 +68,25 @@ void FileIO::checkRinexVersionType(double &rinex_version, int &rinex_type, std::
             }
             // Rinex Type
             std::string type = words[words.size() - 6].substr(0, 1);
+            rinex_type = "";
             if (type == "G") {
-                rinex_type = 0;
+                rinex_type = "GPS";
             }
-            else if (type == "M") {
-                rinex_type = 1;
+            if (type == "R") {
+                rinex_type = "GLONASS";
             }
-            else {
-                rinex_type = NULL;
+            if (type == "E") {
+                rinex_type = "GALILEO";
+            }
+            if (type == "C") {
+                rinex_type = "BEIDOU";
+            }
+            if (type == "M") {
+                rinex_type = "MIXED";
             }
             words.clear();
+            fin.clear();
+            fin.seekg(0,fin.beg);
             break;
         }
         // Fail safe

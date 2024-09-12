@@ -14,6 +14,7 @@ int main(int argc, char *argv[])
     QTextStream out(stdout);
     using Qt::endl;
 
+    //==========================Declare=============================================
     QString obs("C:/Utils/RinexSample/goml299o.23o");
     QString navGPS("C:/Utils/RinexSample/goml299o.23n");
     QString navGLO("C:/Utils/RinexSample/goml299o.23g");
@@ -24,45 +25,68 @@ int main(int argc, char *argv[])
     navPaths.append(navGPS);
     navPaths.append(navGLO);
     navPaths.append(navGAL);
+    //==============================================================================
 
-    FacadeDB* db = FacadeDB::getInstance();
 
-    //=============================RinexReader API=============================================
+    //=============================RinexReader API(sample)==========================
     RinexReader rr(obs,navPaths);
     RinexReader onlyObs(obs, RinexType::OBSERVATION);
     RinexReader onlyNav(obs, RinexType::NAVIGATION);
+    RinexReader onleNavs(navPaths);
 
-    out << "Nav info :" << endl;
-    for(const QString &s : rr.getPaths_nav()){ out << s << endl; }
-    out << rr.getRinex_type_nav() << endl;
-    out << rr.getRinex_version_nav() << endl << endl;
+    //work with observation data
+    //get header data
+    Rinex3Obs::ObsHeaderInfo infHeader = rr.getObsHeaderInfo();
+    //get body data(epochs)
+    QList<Rinex3Obs::ObsEpochInfo> infBody = rr.getEpochs();
 
     out << "Obs info :" << endl;
     out << rr.getPath_obs() << endl;
     out << rr.getRinex_type_obs() << endl;
-    out << rr.getRinex_version_obs() << endl << endl;
+    out << rr.getRinex_version_obs() <<  endl;
+    //head
+    std::cout << infHeader.rinexType << std::endl;
+    //body
+    out <<infBody.size() << endl;
 
-    rr.nextNav();       //navGPS;
-    rr.nextNav();       //navGLO;
-    rr.nextNav();       //navGAL;
-    rr.readNav(rr.getPaths_nav().at(1));
-    rr.readObsHeader();
-    //==============================================================================
-    QList<Rinex3Obs::ObsEpochInfo> inf = rr.getEpochs();
 
-    //==============================================================================
-    //uploadDatatoDB(db, rr);
+
+    //work with navigation files
+    out << "Nav info :" << endl;
+    out <<"All nav files: " << endl;
+    QStringList paths = rr.getPaths_nav();
+    for(const QString &s :  qAsConst(paths)){ out << s << endl; }
+    out << endl;
+
+    rr.nextNav();
+    out << rr.getCurr_path_nav() << endl;
+    out << rr.getRinex_type_nav() << endl;
+    out << rr.getRinex_version_nav() << endl << endl;
+    Rinex3Nav infNav = rr.getNav();
+
+
+    rr.nextNav();
+    out << rr.getCurr_path_nav() << endl;
+    out << rr.getRinex_type_nav() << endl;
+    out << rr.getRinex_version_nav() << endl << endl;
+    infNav = rr.getNav();
+
+    rr.nextNav();
+    out << rr.getCurr_path_nav() << endl;
+    out << rr.getRinex_type_nav() << endl;
+    out << rr.getRinex_version_nav() << endl << endl;
+    infNav = rr.getNav();
 
     rr.clearNav();
     rr.clearObs();
-
-    db->removeAll();
     //==============================================================================
 
 
 
-    //=============================TestFacadeDB=====================================
-    //testFacadeDB();
+    //==============================================================================
+    /*FacadeDB* db = FacadeDB::getInstance();
+    uploadDatatoDB(db, rr);
+    db->removeAll();*/
     //==============================================================================
 }
 

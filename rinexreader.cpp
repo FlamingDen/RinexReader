@@ -9,8 +9,8 @@ RinexReader::RinexReader()
 {
     rinex_version_obs = -1;
     rinex_version_nav = -1;
-    rinex_type_obs = -1;
-    rinex_type_nav = -1;
+    rinex_type_obs = "";
+    rinex_type_nav = "";
     nav_counter = 0;
 }
 
@@ -76,6 +76,11 @@ bool RinexReader::readObsHeader()
         return true;
     }
     return false;
+}
+
+const Rinex3Obs::ObsHeaderInfo& RinexReader::getObsHeaderInfo()
+{
+    return obs._Header;
 }
 
 QList<Rinex3Obs::ObsEpochInfo> RinexReader::getEpochs()
@@ -146,7 +151,7 @@ void RinexReader::clearObs()
     obs._obsTypesGAL.clear();
     obs._obsTypesGLO.clear();
     obs._obsTypesGPS.clear();
-    rinex_type_obs = NULL;
+    rinex_type_obs.clear();
     rinex_version_obs = NULL;
     path_obs = "";
 }
@@ -154,7 +159,7 @@ void RinexReader::clearObs()
 void RinexReader::clearNav()
 {
     nav.clear();
-    rinex_type_nav = NULL;
+    rinex_type_nav.clear();
     rinex_version_nav = NULL;
     paths_nav.clear();
 }
@@ -176,11 +181,6 @@ QString RinexReader::getPath_obs() const
     return path_obs;
 }
 
-Rinex3Obs RinexReader::getObs() const
-{
-    return obs;
-}
-
 Rinex3Nav RinexReader::getNav() const
 {
     return nav;
@@ -189,16 +189,6 @@ Rinex3Nav RinexReader::getNav() const
 FileIO RinexReader::getFIO() const
 {
     return FIO;
-}
-
-std::ifstream& RinexReader::getFin_obs()
-{
-    return fin_obs;
-}
-
-std::ifstream& RinexReader::getFin_nav()
-{
-    return fin_nav;
 }
 
 QStringList RinexReader::getPaths_nav() const
@@ -216,12 +206,12 @@ double RinexReader::getRinex_version_nav() const
     return rinex_version_nav;
 }
 
-int RinexReader::getRinex_type_obs() const
+QString RinexReader::getRinex_type_obs() const
 {
     return rinex_type_obs;
 }
 
-int RinexReader::getRinex_type_nav() const
+QString RinexReader::getRinex_type_nav() const
 {
     return rinex_type_nav;
 }
@@ -249,6 +239,11 @@ void RinexReader::addPath_nav(QString path)
         paths_nav.append(path);
 }
 
+QString RinexReader::getCurr_path_nav() const
+{
+    return curr_path_nav;
+}
+
 
 
 bool RinexReader::checkVersion(RinexType type)
@@ -266,16 +261,21 @@ bool RinexReader::checkVersion(RinexType type)
 void RinexReader::init(QString path, RinexType type)
 {
     switch (type) {
-    case RinexType::OBSERVATION:
+    case RinexType::OBSERVATION:{
         FIO.fileSafeIn(path.toStdString(), fin_obs);
         if(!fin_obs.is_open())
             return;
 
         this->path_obs = path;
 
-        FIO.checkRinexVersionType(rinex_version_obs, rinex_type_obs, fin_obs);
+        std::string type_obs;
+        FIO.checkRinexVersionType(rinex_version_obs, type_obs, fin_obs);
+        rinex_type_obs = type_obs.data();
+
+        readObsHeader();
         break;
-    case RinexType::NAVIGATION:
+    }
+    case RinexType::NAVIGATION:{
         if(fin_nav.is_open())
             fin_nav.close();
         FIO.fileSafeIn(path.toStdString(), fin_nav);
@@ -285,8 +285,13 @@ void RinexReader::init(QString path, RinexType type)
         if(!paths_nav.contains(path))
             paths_nav.append(path);
 
-        FIO.checkRinexVersionType(rinex_version_nav, rinex_type_nav, fin_nav);
+        std::string type_nav;
+        FIO.checkRinexVersionType(rinex_version_nav, type_nav, fin_nav);
+        rinex_type_nav = type_nav.data();
+
+        curr_path_nav = path;
         break;
+    }
     default:
         break;
     }

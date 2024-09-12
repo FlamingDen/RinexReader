@@ -48,17 +48,17 @@ public:
     Rinex3Obs::ObsHeaderInfo _Header;
     Rinex3Obs::ObsEpochInfo _EpochObs;
 
-    // * Available observation types (C1C, L1C,...)
-    std::vector<std::string> _obsTypesGPS;
-    std::vector<std::string> _obsTypesGLO;
-    std::vector<std::string> _obsTypesGAL;
-    std::vector<std::string> _obsTypesBEI;
-
     // * Epoch observations mapped to PRN for ease of use
     std::map<int, std::vector<double>> _obsGPS;
     std::map<int, std::vector<double>> _obsGLO;
     std::map<int, std::vector<double>> _obsGAL;
     std::map<int, std::vector<double>> _obsBEI;
+
+    // * Available observation types (C1C, L1C,...)
+    std::vector<std::string> _obsTypesGPS;
+    std::vector<std::string> _obsTypesGLO;
+    std::vector<std::string> _obsTypesGAL;
+    std::vector<std::string> _obsTypesBEI;
 
     // Functions
     void obsHeader(std::ifstream& infile);

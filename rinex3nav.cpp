@@ -53,7 +53,7 @@ vector<double> rinex3NavDataSplitter(string line) {
 
 
 //=======================================================================================
-// Epoch Time Matcher, returns index of most appropriate Navigation vector
+// Epoch Time Matcher, returns index of most appropriate data from Navigation vector
 int Rinex3Nav::EpochMatcher(double obsTime, std::vector<Rinex3Nav::DataGPS> NAV) {
     // Initialize time difference variable using arbitrary large number
     double diff = 1000000; int index = 0;
@@ -68,7 +68,7 @@ int Rinex3Nav::EpochMatcher(double obsTime, std::vector<Rinex3Nav::DataGPS> NAV)
     return index;
 }
 
-// Epoch Time Matcher, returns index of most appropriate Navigation vector
+// Epoch Time Matcher, returns index of most appropriate data from Navigation vector
 int Rinex3Nav::EpochMatcher(double obsTime, std::vector<Rinex3Nav::DataGLO> NAV) {
     // Initialize time difference variable using arbitrary large number
     double diff = 1000000; int index = 0;
@@ -83,7 +83,7 @@ int Rinex3Nav::EpochMatcher(double obsTime, std::vector<Rinex3Nav::DataGLO> NAV)
     return index;
 }
 
-// Epoch Time Matcher, returns index of most appropriate Navigation vector
+// Epoch Time Matcher, returns index of most appropriate data from Navigation vector
 int Rinex3Nav::EpochMatcher(double obsTime, std::vector<Rinex3Nav::DataGAL> NAV) {
     // Initialize time difference variable using arbitrary large number
     double diff = 1000000; int index = 0;

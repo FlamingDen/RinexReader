@@ -105,7 +105,7 @@ void Rinex3Obs::obsHeader(ifstream& infile) {
             istringstream iss(line);
             // Rinex type should be stored in 4th word of line
             vector<string> words{ istream_iterator<string>{iss}, istream_iterator<string>{} };
-            _Header.rinexType = words[3];
+            _Header.rinexType = words[words.size() - 5];
             words.clear();
         }
         // Approximate Position
