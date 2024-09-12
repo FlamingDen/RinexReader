@@ -3,6 +3,7 @@
 #include "rinex3obs.h"
 #include "rinex3nav.h"
 #include "timeutils.h"
+#include "csvcreator.h"
 
 
 RinexReader::RinexReader()
@@ -102,6 +103,14 @@ QList<Rinex3Obs::ObsEpochInfo> RinexReader::getEpochs()
         obs.clear(obs._EpochObs);
     }
     return epochs;
+}
+
+void RinexReader::saveObsAsCSV(QString pathToSave, QString sep)
+{
+    if(!path_obs.isEmpty() && checkVersion(RinexType::OBSERVATION)){
+        CSVCreator csvCreator(getEpochs(),sep);
+        csvCreator.createCSV(pathToSave);
+    }
 }
 
 

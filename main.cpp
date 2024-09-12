@@ -4,6 +4,7 @@
 
 #include "facadedb.h"
 #include "rinexreader.h"
+#include "csvcreator.h"
 
 void uploadDatatoDB(FacadeDB* db, RinexReader& rr);
 void testFacadeDB();
@@ -30,6 +31,7 @@ int main(int argc, char *argv[])
 
     //=============================RinexReader API(sample)==========================
     RinexReader rr(obs,navPaths);
+    rr.saveObsAsCSV("C:/Utils/RinexSample/infEpochs.csv",",");
     RinexReader onlyObs(obs, RinexType::OBSERVATION);
     RinexReader onlyNav(obs, RinexType::NAVIGATION);
     RinexReader onleNavs(navPaths);
@@ -84,9 +86,9 @@ int main(int argc, char *argv[])
 
 
     //==============================================================================
-    /*FacadeDB* db = FacadeDB::getInstance();
-    uploadDatatoDB(db, rr);
-    db->removeAll();*/
+    // FacadeDB* db = FacadeDB::getInstance();
+    // uploadDatatoDB(db, rr);
+    //db->removeAll();
     //==============================================================================
 }
 

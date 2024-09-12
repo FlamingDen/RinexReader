@@ -29,6 +29,7 @@ public:
     //bool readObsHeader();                           //read a header and Set position stream on beginning
     const Rinex3Obs::ObsHeaderInfo& getObsHeaderInfo();
     QList<Rinex3Obs::ObsEpochInfo> getEpochs();     //give you list of epochs
+    void saveObsAsCSV(QString pathToSave, QString sep);
 
     void nextNav();                                 // read in order, one by one
     bool readNav(QString path);                     //
