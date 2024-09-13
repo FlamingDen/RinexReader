@@ -185,7 +185,7 @@ void rinex3SatObsOrganizer(string line, map<string, map<int, vector<double>>>& d
     string word;
     vector<double> obs;
     for (unsigned i = 0; i < line.length(); i += 16) {
-        word = line.substr(i, 14);
+        word = line.substr(i, 16);
         if (word.find_first_not_of(' ') == string::npos) {
             word = "0";
         }
