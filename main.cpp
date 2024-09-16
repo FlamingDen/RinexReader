@@ -4,7 +4,6 @@
 
 #include "facadedb.h"
 #include "rinexreader.h"
-#include "csvcreator.h"
 
 void uploadDatatoDB(FacadeDB* db, RinexReader& rr);
 void testFacadeDB();
@@ -14,7 +13,7 @@ int main(int argc, char *argv[])
     QCoreApplication a(argc, argv);
     QTextStream out(stdout);
     using Qt::endl;
-
+    out << QCoreApplication::applicationDirPath() << endl;
     //==========================Declare=============================================
     QString obs("C:/Utils/RinexSample/goml299o.23o");
     QString navGPS("C:/Utils/RinexSample/goml299o.23n");
@@ -26,12 +25,13 @@ int main(int argc, char *argv[])
     navPaths.append(navGPS);
     navPaths.append(navGLO);
     navPaths.append(navGAL);
+    navPaths.append(navBEI);
     //==============================================================================
 
 
     //=============================RinexReader API(sample)==========================
     RinexReader rr(obs,navPaths);
-    rr.saveObsAsCSV("C:/Utils/RinexSample/infEpochs.csv",",");
+    //rr.saveObsAsCSV("C:/Utils/RinexSample/infEpochs.csv");
     RinexReader onlyObs(obs, RinexType::OBSERVATION);
     RinexReader onlyNav(obs, RinexType::NAVIGATION);
     RinexReader onleNavs(navPaths);
@@ -40,16 +40,25 @@ int main(int argc, char *argv[])
     //get header data
     Rinex3Obs::ObsHeaderInfo infHeader = rr.getObsHeaderInfo();
     //get body data(epochs)
-    QList<Rinex3Obs::ObsEpochInfo> infBody = rr.getEpochs();
+    //QList<Rinex3Obs::ObsEpochInfo> infBody = rr.getEpochs();
 
-    out << "Obs info :" << endl;
+
+    rr.readNav(navBEI);
+    out << rr.getCurr_path_nav() << endl;
+    out << rr.getRinex_type_nav() << endl;
+    out << rr.getRinex_version_nav() << endl << endl;
+    Rinex3Nav infNav = rr.getNav();
+    out << endl;
+
+
+    /*out << "Obs info :" << endl;
     out << rr.getPath_obs() << endl;
     out << rr.getRinex_type_obs() << endl;
     out << rr.getRinex_version_obs() <<  endl;
     //head
     std::cout << infHeader.rinexType << std::endl;
     //body
-    out <<infBody.size() << endl;
+    out << infBody.size() << endl;
 
 
 
@@ -80,15 +89,14 @@ int main(int argc, char *argv[])
     infNav = rr.getNav();
 
     rr.clearNav();
-    rr.clearObs();
+    rr.clearObs();*/
     //==============================================================================
 
 
-
     //==============================================================================
-    // FacadeDB* db = FacadeDB::getInstance();
-    // uploadDatatoDB(db, rr);
-    //db->removeAll();
+    /*FacadeDB* db = FacadeDB::getInstance();
+    uploadDatatoDB(db, rr);
+    db->removeAll();*/
     //==============================================================================
 }
 

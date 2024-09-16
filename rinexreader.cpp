@@ -2,7 +2,6 @@
 
 #include "rinex3obs.h"
 #include "rinex3nav.h"
-#include "timeutils.h"
 #include "csvcreator.h"
 
 
@@ -10,8 +9,8 @@ RinexReader::RinexReader()
 {
     rinex_version_obs = -1;
     rinex_version_nav = -1;
-    rinex_type_obs = "";
-    rinex_type_nav = "";
+    rinex_type_obs = 0;
+    rinex_type_nav = 0;
     nav_counter = 0;
 }
 
@@ -101,15 +100,26 @@ QList<Rinex3Obs::ObsEpochInfo> RinexReader::getEpochs()
             }
         }
         obs.clear(obs._EpochObs);
+
+        fin_obs.clear();
+        fin_obs.seekg(0,fin_obs.beg);
     }
     return epochs;
+}
+
+void RinexReader::saveObsAsCSV(QString pathToSave)
+{
+    if(!path_obs.isEmpty() && checkVersion(RinexType::OBSERVATION)){
+        CSVobs csv_obs(getEpochs());
+        csv_obs.createCSV(pathToSave);
+    }
 }
 
 void RinexReader::saveObsAsCSV(QString pathToSave, QString sep)
 {
     if(!path_obs.isEmpty() && checkVersion(RinexType::OBSERVATION)){
-        CSVCreator csvCreator(getEpochs(),sep);
-        csvCreator.createCSV(pathToSave);
+        CSVobs csv_obs(getEpochs(),sep);
+        csv_obs.createCSV(pathToSave);
     }
 }
 
@@ -157,20 +167,24 @@ void RinexReader::clearObs()
     obs._obsGAL.clear();
     obs._obsGLO.clear();
     obs._obsGPS.clear();
+    obs._obsBEI.clear();
     obs._obsTypesGAL.clear();
     obs._obsTypesGLO.clear();
     obs._obsTypesGPS.clear();
-    rinex_type_obs.clear();
+    obs._obsTypesBEI.clear();
+    rinex_type_obs = 0;
     rinex_version_obs = NULL;
     path_obs = "";
+    fin_obs.close();
 }
 
 void RinexReader::clearNav()
 {
     nav.clear();
-    rinex_type_nav.clear();
+    rinex_type_nav = 0;
     rinex_version_nav = NULL;
     paths_nav.clear();
+    fin_nav.close();
 }
 
 
@@ -179,9 +193,6 @@ void RinexReader::close()
 {
     clearObs();
     clearNav();
-    this->paths_nav.clear();
-    fin_nav.close();
-    fin_obs.close();
 }
 
 
@@ -215,16 +226,15 @@ double RinexReader::getRinex_version_nav() const
     return rinex_version_nav;
 }
 
-QString RinexReader::getRinex_type_obs() const
+int RinexReader::getRinex_type_obs() const
 {
     return rinex_type_obs;
 }
 
-QString RinexReader::getRinex_type_nav() const
+int RinexReader::getRinex_type_nav() const
 {
     return rinex_type_nav;
 }
-
 
 void RinexReader::setPath_obs(QString newPath_obs)
 {
@@ -242,8 +252,10 @@ void RinexReader::setPaths_nav(const QStringList &newPaths_nav)
 
 void RinexReader::addPath_nav(QString path)
 {
-    if (paths_nav.isEmpty())
+    if (paths_nav.isEmpty()){
         init(path,RinexType::NAVIGATION);
+        return;
+    }
     if(!paths_nav.contains(path))
         paths_nav.append(path);
 }
@@ -277,9 +289,8 @@ void RinexReader::init(QString path, RinexType type)
 
         this->path_obs = path;
 
-        std::string type_obs;
-        FIO.checkRinexVersionType(rinex_version_obs, type_obs, fin_obs);
-        rinex_type_obs = type_obs.data();
+
+        FIO.checkRinexVersionType(rinex_version_obs, rinex_type_obs, fin_obs);
 
         readObsHeader();
         break;
@@ -294,9 +305,7 @@ void RinexReader::init(QString path, RinexType type)
         if(!paths_nav.contains(path))
             paths_nav.append(path);
 
-        std::string type_nav;
-        FIO.checkRinexVersionType(rinex_version_nav, type_nav, fin_nav);
-        rinex_type_nav = type_nav.data();
+        FIO.checkRinexVersionType(rinex_version_nav, rinex_type_nav, fin_nav);
 
         curr_path_nav = path;
         break;

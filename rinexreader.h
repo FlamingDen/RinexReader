@@ -6,12 +6,22 @@
 #include "rinex3obs.h"
 #include "rinex3nav.h"
 #include "fileio.h"
-#include "timeutils.h"
 
 enum class RinexType {
     OBSERVATION,
     NAVIGATION
 };
+
+enum class SatelliteSystem
+{
+    None          = 0,
+    GPS           = 1,
+    Galileo       = 2,
+    Glonass       = 3,
+    BeiDou        = 4,
+    Mixed         = 5
+};
+
 
 class RinexReader
 {
@@ -26,34 +36,34 @@ public:
     RinexReader(const RinexReader &other);
     RinexReader &operator=(const RinexReader& other);
 
-    //bool readObsHeader();                           //read a header and Set position stream on beginning
-    const Rinex3Obs::ObsHeaderInfo& getObsHeaderInfo();
-    QList<Rinex3Obs::ObsEpochInfo> getEpochs();     //give you list of epochs
-    void saveObsAsCSV(QString pathToSave, QString sep);
+    const Rinex3Obs::ObsHeaderInfo& getObsHeaderInfo(); //give header obs info
+    QList<Rinex3Obs::ObsEpochInfo> getEpochs();         //give you list of epochs
+    void saveObsAsCSV(QString pathToSave);              //save obs file in .csv format
+    void saveObsAsCSV(QString pathToSave, QString sep); //
 
-    void nextNav();                                 // read in order, one by one
-    bool readNav(QString path);                     //
-    void readNav(int index);
-    Rinex3Nav getNav() const;
+    void nextNav();                                     // read in order, one by one
+    bool readNav(QString path);                         // read anv file by path
+    void readNav(int index);                            // read anv file by index
+    Rinex3Nav getNav() const;                           // give all data from nav file
 
     void clearObs();
     void clearNav();
-    void close();
 
-
+    //Getter
     QString getPath_obs() const;
     QStringList getPaths_nav() const;
     FileIO getFIO() const;
     double getRinex_version_obs() const;
     double getRinex_version_nav() const;
-    QString getRinex_type_obs() const;
-    QString getRinex_type_nav() const;
+    int getRinex_type_obs() const;
+    int getRinex_type_nav() const;
+    QString getCurr_path_nav() const;
 
+    //Setter
     void setPath_obs(QString newPath_obs);
     void setPaths_nav(const QStringList &newPaths_nav);
-    void addPath_nav(QString path);
 
-    QString getCurr_path_nav() const;
+    void addPath_nav(QString path);
 
 private:
     QString path_obs;
@@ -61,8 +71,8 @@ private:
     QString curr_path_nav;
     double rinex_version_obs;
     double rinex_version_nav;
-    QString rinex_type_obs;
-    QString rinex_type_nav;
+    int rinex_type_obs;
+    int rinex_type_nav;
     Rinex3Obs obs;
     Rinex3Nav nav;
     FileIO FIO;
@@ -70,9 +80,10 @@ private:
     std::ifstream fin_nav;
     int nav_counter;
 
-    bool readObsHeader();
+    bool readObsHeader();                                   //read a header and Set position stream on beginning
 
-    void init(QString path, RinexType type);
+    void close();
+    void init(QString path, RinexType type);                //open stream for file(path) and add to field if not contains
     bool checkVersion(RinexType type);
 };
 

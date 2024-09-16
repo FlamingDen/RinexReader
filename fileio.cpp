@@ -1,4 +1,3 @@
-#include "pch.h"
 #include "fileio.h"
 using namespace std;
 
@@ -43,7 +42,7 @@ void FileIO::fileSafeOut(string output_filename, ofstream& fout) {
 }
 
 // Check Rinex File Version
-void FileIO::checkRinexVersionType(double &rinex_version, std::string &rinex_type, std::ifstream &fin)
+void FileIO::checkRinexVersionType(double &rinex_version, int &rinex_type, std::ifstream &fin)
 {
     const std::string sTokenVER = "RINEX VERSION / TYPE";
     std::string line; int nLines = 0;
@@ -68,23 +67,24 @@ void FileIO::checkRinexVersionType(double &rinex_version, std::string &rinex_typ
             }
             // Rinex Type
             std::string type = words[words.size() - 6].substr(0, 1);
-            rinex_type = "";
+            rinex_type = 0;
             if (type == "G") {
-                rinex_type = "GPS";
+                rinex_type = 1;
             }
             if (type == "R") {
-                rinex_type = "GLONASS";
+                rinex_type = 3;
             }
             if (type == "E") {
-                rinex_type = "GALILEO";
+                rinex_type = 2;
             }
             if (type == "C") {
-                rinex_type = "BEIDOU";
+                rinex_type = 4;
             }
             if (type == "M") {
-                rinex_type = "MIXED";
+                rinex_type = 5;
             }
             words.clear();
+
             fin.clear();
             fin.seekg(0,fin.beg);
             break;

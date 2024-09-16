@@ -2,9 +2,29 @@
 #include <QString>
 #include <QDateTime>
 
-CSVCreator::CSVCreator(const QList<Rinex3Obs::ObsEpochInfo>& epochs, QString sep): sep(sep), epochs(epochs){}
+CSVCreator::CSVCreator(QString sep): sep(sep){}
 
-bool CSVCreator::createCSV(QString pathToSave)
+CSVCreator::~CSVCreator(){}
+
+QString CSVCreator::getSep() const
+{
+    return sep;
+}
+
+void CSVCreator::setSep(QString newSep)
+{
+    sep = newSep;
+}
+
+
+
+CSVobs::CSVobs(const QList<Rinex3Obs::ObsEpochInfo> &epochs) : CSVobs(epochs,",") {}
+
+CSVobs::CSVobs(const QList<Rinex3Obs::ObsEpochInfo> &epochs, QString sep) : CSVCreator(sep), epochs(epochs){}
+
+CSVobs::~CSVobs() {}
+
+bool CSVobs::createCSV(QString pathToSave)
 {
     std::ofstream out(pathToSave.toStdString());
     if(out.is_open() && !out.bad()){

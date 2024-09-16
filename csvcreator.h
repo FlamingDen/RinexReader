@@ -8,12 +8,28 @@
 class CSVCreator
 {
 public:
-    CSVCreator(const QList<Rinex3Obs::ObsEpochInfo>& epochs, QString sep);
+    CSVCreator(QString sep);
+    ~CSVCreator();
+
+    virtual bool createCSV(QString pathToSave) = 0;
+
+    QString getSep() const;
+    void setSep(QString newSep);
+
+protected:
+    QString sep;
+};
+//========================================================================
+class CSVobs : public CSVCreator
+{
+public:
+    CSVobs(const QList<Rinex3Obs::ObsEpochInfo> &epochs);
+    CSVobs(const QList<Rinex3Obs::ObsEpochInfo> &epochs, QString sep);
+    ~CSVobs();
 
     bool createCSV(QString pathToSave);
 private:
-    QString sep;
     QList<Rinex3Obs::ObsEpochInfo> epochs;
 };
-
+//========================================================================
 #endif // CSVCREATOR_H

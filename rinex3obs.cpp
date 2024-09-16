@@ -1,4 +1,3 @@
-#include "pch.h"
 #include "rinex3obs.h"
 using namespace std;
 
@@ -309,13 +308,7 @@ bool Rinex3Obs::obsEpoch(ifstream& infile) {
 //============================Clear======================================================
 // To clear contents in observation data structure
 void Rinex3Obs::clear(Rinex3Obs::ObsEpochInfo& obs) {
-    obs.epochRecord.clear();
-    obs.numSatsGAL = NULL;
-    obs.numSatsGLO = NULL;
-    obs.numSatsGPS = NULL;
-    obs.numSatsBEI = NULL;
-    obs.observations.clear();
-    obs.recClockOffset = NULL;
+    obs.clear();
     obs.gpsTime = NULL;
 }
 
