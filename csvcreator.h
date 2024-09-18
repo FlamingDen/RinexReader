@@ -3,7 +3,11 @@
 
 #include <QString>
 #include <QList>
-#include "rinex3obs.h"
+#include <rinex3nav.h>
+#include <rinex3obs.h>
+#include"enumtypes.h"
+
+class RinexReader;
 
 class CSVCreator
 {
@@ -11,11 +15,10 @@ public:
     CSVCreator(QString sep);
     ~CSVCreator();
 
-    virtual bool createCSV(QString pathToSave) = 0;
+    virtual void createCSV(QString pathToSave) = 0;
 
     QString getSep() const;
     void setSep(QString newSep);
-
 protected:
     QString sep;
 };
@@ -27,9 +30,22 @@ public:
     CSVobs(const QList<Rinex3Obs::ObsEpochInfo> &epochs, QString sep);
     ~CSVobs();
 
-    bool createCSV(QString pathToSave);
+    void createCSV(QString pathToSave);
 private:
     QList<Rinex3Obs::ObsEpochInfo> epochs;
 };
 //========================================================================
+
+class CSVnav : public CSVCreator
+{
+public:
+    CSVnav(const Rinex3Nav &nav);
+    CSVnav(const Rinex3Nav &nav, QString sep);
+    ~CSVnav();
+
+    void createCSV(QString pathToSave);
+private:
+    Rinex3Nav nav;
+};
+
 #endif // CSVCREATOR_H

@@ -5,22 +5,8 @@
 #include <QObject>
 #include "rinex3obs.h"
 #include "rinex3nav.h"
+#include "csvcreator.h"
 #include "fileio.h"
-
-enum class RinexType {
-    OBSERVATION,
-    NAVIGATION
-};
-
-enum class SatelliteSystem
-{
-    None          = 0,
-    GPS           = 1,
-    Galileo       = 2,
-    Glonass       = 3,
-    BeiDou        = 4,
-    Mixed         = 5
-};
 
 
 class RinexReader
@@ -38,8 +24,8 @@ public:
 
     const Rinex3Obs::ObsHeaderInfo& getObsHeaderInfo(); //give header obs info
     QList<Rinex3Obs::ObsEpochInfo> getEpochs();         //give you list of epochs
-    void saveObsAsCSV(QString pathToSave);              //save obs file in .csv format
-    void saveObsAsCSV(QString pathToSave, QString sep); //
+
+    void saveAsCSV(QString pathToSave, RinexType type, QString sep = ","); //save files in .csv format
 
     void nextNav();                                     // read in order, one by one
     bool readNav(QString path);                         // read anv file by path

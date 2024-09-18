@@ -8,6 +8,7 @@ CONFIG += c++17 cmdline
 
 SOURCES += \
         csvcreator.cpp \
+        enumtypes.cpp \
         facadedb.cpp \
         fileio.cpp \
         main.cpp \
@@ -27,6 +28,7 @@ else: unix:!android: target.path = /opt/$${TARGET}/bin
 
 HEADERS += \
     csvcreator.h \
+    enumtypes.h \
     facadedb.h \
     fileio.h \
     pch.h \

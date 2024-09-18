@@ -24,7 +24,7 @@ CSVobs::CSVobs(const QList<Rinex3Obs::ObsEpochInfo> &epochs, QString sep) : CSVC
 
 CSVobs::~CSVobs() {}
 
-bool CSVobs::createCSV(QString pathToSave)
+void CSVobs::createCSV(QString pathToSave)
 {
     std::ofstream out(pathToSave.toStdString());
     if(out.is_open() && !out.bad()){
@@ -37,7 +37,7 @@ bool CSVobs::createCSV(QString pathToSave)
                 std::map<int,std::vector<double>>::iterator it = data.begin();
                 for(it = data.begin(); it != data.end();it++){
                     //prn
-                    QString code = QString(itObs->first.data()) + QString("%1").arg(it->first,2,10,QChar('0'));
+                    QString prn = QString(itObs->first.data()) + QString("%1").arg(it->first,2,10,QChar('0'));
                     //datetime
                     std::vector<double> time = listIt->epochRecord;
                     QDateTime dt(QDate(time.at(0),time.at(1),time.at(2)),QTime(time.at(3),time.at(4),time.at(5)));
@@ -48,7 +48,7 @@ bool CSVobs::createCSV(QString pathToSave)
                         epochData = epochData.append("%1%2").arg(QString::number(x,'f',5), sep);
                     epochData.remove(epochData.size()-1,1);
 
-                    line = line.append("%1%5%2%5%3%5%4").arg(dt.toString(Qt::ISODate), code, code.at(0), QString("\"{" + epochData + "}\"\n"), sep);
+                    line = line.append("%1%5%2%5%3%5%4").arg(dt.toString(Qt::ISODate), prn, prn.at(0), QString("\"{" + epochData + "}\"\n"), sep);
                     out << line.toStdString();
 
                     line.clear();
@@ -57,5 +57,65 @@ bool CSVobs::createCSV(QString pathToSave)
         }
         out.close();
     }
-    return false;
+}
+
+
+
+CSVnav::CSVnav(const Rinex3Nav &nav) : CSVnav(nav,","){}
+
+CSVnav::CSVnav(const Rinex3Nav &nav, QString sep): CSVCreator(sep), nav(nav){}
+
+CSVnav::~CSVnav(){}
+
+template<typename T>
+void createCSVHelperNav(std::map<int, std::vector<T>> _nav, std::ofstream& out, QString sep){
+    QString line;
+    typename std::map<int, std::vector<T>>::iterator it = _nav.begin();
+    for (it = _nav.begin(); it != _nav.end(); it++){
+        typename std::vector<T>::iterator satIt = it->second.begin();
+        for(satIt = it->second.begin(); satIt != it->second.end(); satIt++){
+            //prn
+            QString prn = getSatelliteSystemShort(satIt->PRN) + QString("%1").arg(satIt->PRN,2,10,QChar('0'));
+            //datetime
+            std::vector<double> time = satIt->epochInfo;
+            QDateTime dt(QDate(time.at(0),time.at(1),time.at(2)),QTime(time.at(3),time.at(4),time.at(5)));
+            //nav data
+            std::vector<std::optional<double>> vec = satIt->toVec();
+            //QList<double> navList(vec.begin(),vec.end());
+            QString strNavData;
+            foreach (std::optional<double> x, vec){
+                x.has_value() ? strNavData = strNavData.append("%1%2").arg(QString::number(x.value(),'f',19), sep) :
+                                strNavData = strNavData.append("%1%2").arg("", sep);
+            }
+            strNavData.remove(strNavData.size()-1,1);
+
+            line = line.append("%1%5%2%5%3%5%4").arg(dt.toString(Qt::ISODate), prn, prn.at(0), QString("\"{" + strNavData + "}\"\n"), sep);
+            out << line.toStdString();
+
+            line.clear();
+        }
+    }
+}
+
+void CSVnav::createCSV(QString pathToSave)
+{
+    std::ofstream out(pathToSave.toStdString());
+    if(out.is_open() && !out.bad()){
+        //GPS
+        if(!nav._navGPS.empty()){
+            createCSVHelperNav(nav._navGPS,out, sep);
+        }
+        //GLONASS
+        if(!nav._navGLO.empty()){
+            createCSVHelperNav(nav._navGLO, out, sep);
+        }
+        //GALILEO
+        if(!nav._navGAL.empty()){
+            createCSVHelperNav(nav._navGAL,out, sep);
+        }
+        //BEIDOU
+        if(!nav._navBEI.empty()){
+            createCSVHelperNav(nav._navBEI,out, sep);
+        }
+    }
 }

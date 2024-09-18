@@ -14,6 +14,7 @@ int main(int argc, char *argv[])
     QTextStream out(stdout);
     using Qt::endl;
     out << QCoreApplication::applicationDirPath() << endl;
+
     //==========================Declare=============================================
     QString obs("C:/Utils/RinexSample/goml299o.23o");
     QString navGPS("C:/Utils/RinexSample/goml299o.23n");
@@ -21,59 +22,43 @@ int main(int argc, char *argv[])
     QString navGAL("C:/Utils/RinexSample/goml299o.23l");
     QString navBEI("C:/Utils/RinexSample/goml299o.23f");
 
-    QStringList navPaths;
-    navPaths.append(navGPS);
-    navPaths.append(navGLO);
-    navPaths.append(navGAL);
-    navPaths.append(navBEI);
+    QStringList navPaths{navGPS, navGLO, navGAL, navBEI};
+
+    QString pathCSVobs = "C:/Utils/RinexSample/infEpochs.csv";
+    QString pathCSVnav = "C:/Utils/RinexSample/infNavs.csv";
     //==============================================================================
 
 
     //=============================RinexReader API(sample)==========================
+
     RinexReader rr(obs,navPaths);
-    //rr.saveObsAsCSV("C:/Utils/RinexSample/infEpochs.csv");
-    RinexReader onlyObs(obs, RinexType::OBSERVATION);
-    RinexReader onlyNav(obs, RinexType::NAVIGATION);
-    RinexReader onleNavs(navPaths);
+    //rr.saveAsCSV(pathCSVobs, RinexType::OBSERVATION);
 
-    //work with observation data
-    //get header data
-    Rinex3Obs::ObsHeaderInfo infHeader = rr.getObsHeaderInfo();
-    //get body data(epochs)
-    //QList<Rinex3Obs::ObsEpochInfo> infBody = rr.getEpochs();
-
-
-    rr.readNav(navBEI);
-    out << rr.getCurr_path_nav() << endl;
-    out << rr.getRinex_type_nav() << endl;
-    out << rr.getRinex_version_nav() << endl << endl;
-    Rinex3Nav infNav = rr.getNav();
-    out << endl;
-
-
-    /*out << "Obs info :" << endl;
-    out << rr.getPath_obs() << endl;
-    out << rr.getRinex_type_obs() << endl;
-    out << rr.getRinex_version_obs() <<  endl;
-    //head
-    std::cout << infHeader.rinexType << std::endl;
-    //body
-    out << infBody.size() << endl;
+    rr.nextNav();
+    rr.nextNav();
+    rr.nextNav();
+    rr.nextNav();
+    rr.saveAsCSV(pathCSVnav, RinexType::NAVIGATION);
 
 
 
+
+/*
     //work with navigation files
     out << "Nav info :" << endl;
     out <<"All nav files: " << endl;
     QStringList paths = rr.getPaths_nav();
     for(const QString &s :  qAsConst(paths)){ out << s << endl; }
     out << endl;
+    Rinex3Nav infNav;
 
     rr.nextNav();
     out << rr.getCurr_path_nav() << endl;
     out << rr.getRinex_type_nav() << endl;
     out << rr.getRinex_version_nav() << endl << endl;
-    Rinex3Nav infNav = rr.getNav();
+    infNav = rr.getNav();
+
+
 
 
     rr.nextNav();
@@ -87,17 +72,18 @@ int main(int argc, char *argv[])
     out << rr.getRinex_type_nav() << endl;
     out << rr.getRinex_version_nav() << endl << endl;
     infNav = rr.getNav();
+
+    rr.nextNav();
+    out << rr.getCurr_path_nav() << endl;
+    out << rr.getRinex_type_nav() << endl;
+    out << rr.getRinex_version_nav() << endl << endl;
+    infNav = rr.getNav();
+
 
     rr.clearNav();
     rr.clearObs();*/
     //==============================================================================
 
-
-    //==============================================================================
-    /*FacadeDB* db = FacadeDB::getInstance();
-    uploadDatatoDB(db, rr);
-    db->removeAll();*/
-    //==============================================================================
 }
 
 void uploadDatatoDB(FacadeDB* db, RinexReader &rr){

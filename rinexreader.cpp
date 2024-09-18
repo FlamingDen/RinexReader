@@ -1,8 +1,5 @@
 #include "rinexreader.h"
-
-#include "rinex3obs.h"
-#include "rinex3nav.h"
-#include "csvcreator.h"
+#include<enumtypes.h>
 
 
 RinexReader::RinexReader()
@@ -42,6 +39,9 @@ RinexReader::~RinexReader()
 }
 
 RinexReader::RinexReader(const RinexReader &other) : RinexReader(other.getPath_obs(),other.getPaths_nav()){
+    close();
+    this->setPath_obs(other.path_obs);
+    this->setPaths_nav(other.paths_nav);
     nav_counter = other.nav_counter;
     this->obs = other.obs;
     this->nav = other.nav;
@@ -107,19 +107,25 @@ QList<Rinex3Obs::ObsEpochInfo> RinexReader::getEpochs()
     return epochs;
 }
 
-void RinexReader::saveObsAsCSV(QString pathToSave)
+void RinexReader::saveAsCSV(QString pathToSave, RinexType type, QString sep)
 {
-    if(!path_obs.isEmpty() && checkVersion(RinexType::OBSERVATION)){
-        CSVobs csv_obs(getEpochs());
-        csv_obs.createCSV(pathToSave);
+    switch (type) {
+    case RinexType::OBSERVATION: {
+        if(!path_obs.isEmpty() && checkVersion(type)){
+            CSVobs csv_obs(getEpochs(), sep);
+            csv_obs.createCSV(pathToSave);
+        }
+        break;
     }
-}
-
-void RinexReader::saveObsAsCSV(QString pathToSave, QString sep)
-{
-    if(!path_obs.isEmpty() && checkVersion(RinexType::OBSERVATION)){
-        CSVobs csv_obs(getEpochs(),sep);
-        csv_obs.createCSV(pathToSave);
+    case RinexType::NAVIGATION: {
+        if(!paths_nav.isEmpty() && checkVersion(type)){
+            CSVnav csv_nav(getNav(), sep);
+            csv_nav.createCSV(pathToSave);
+        }
+        break;
+    }
+    default:
+        break;
     }
 }
 
@@ -133,7 +139,8 @@ void RinexReader::nextNav()
     if (nav_counter != 0)
         init(paths_nav.at(nav_counter),RinexType::NAVIGATION);
     if(checkVersion(RinexType::NAVIGATION) || !fin_nav.is_open()){
-        nav.readMixed(fin_nav);
+        readNav(nav_counter);
+        //nav.readMixed(fin_nav);
         fin_nav.close();
         nav_counter++;
     }
@@ -145,7 +152,30 @@ bool RinexReader::readNav(QString path)
         return false;
     init(path,RinexType::NAVIGATION);
     if(checkVersion(RinexType::NAVIGATION)){
-        nav.readMixed(fin_nav);
+        switch (rinex_type_nav) {
+        case static_cast<int>(SatelliteSystem::GPS):{
+            nav.readGPS(fin_nav);
+            break;
+        }
+        case static_cast<int>(SatelliteSystem::Galileo):{
+            nav.readGAL(fin_nav);
+            break;
+        }
+        case static_cast<int>(SatelliteSystem::Glonass):{
+            nav.readGLO(fin_nav);
+            break;
+        }
+        case static_cast<int>(SatelliteSystem::BeiDou):{
+            nav.readBEI(fin_nav);
+            break;
+        }
+        case static_cast<int>(SatelliteSystem::Mixed):{
+            nav.readMixed(fin_nav);
+            break;
+        }
+        default:
+            return false;
+        }
         return true;
     }
     return false;
@@ -314,8 +344,6 @@ void RinexReader::init(QString path, RinexType type)
         break;
     }
 }
-
-
 
 
 

@@ -3,6 +3,7 @@
 using namespace std;
 
 Rinex3Nav::Rinex3Nav() {}
+
 Rinex3Nav::~Rinex3Nav() {}
 
 // A function to help with organizing GPS header
@@ -35,26 +36,41 @@ vector<double> rinex3EpochTimeOrganizer(string line) {
 }
 
 // Function to split and organize navigation parameters
-vector<double> rinex3NavDataSplitter(string line) {
+vector<std::optional<double>> rinex3NavDataSplitter(string line) {
     // Split line every 19 spaces as allocated for parameters
-    vector<double> data;
+    vector<std::optional<double>> data;
+    //vector<double> data;
     string word;
     for (unsigned i = 0; i < line.length(); i += 19) {
         word = line.substr(i, 19);
-        if (word.find_first_not_of(' ') == std::string::npos) { continue; }
-        if (word.find('D') != std::string::npos) { data.push_back(stod(replaceChars(word, 'D', 'e'))); }
-        if (word.find('E') != std::string::npos) { data.push_back(stod(replaceChars(word, 'E', 'e'))); }
-        if (word.find('e') != std::string::npos) { data.push_back(stod(word)); }
-        else { continue; }
-        word.clear();
+        if (word.find_first_not_of(' ') == std::string::npos) {
+            data.push_back(std::nullopt);
+            continue;
+        }
+        if (word.find('D') != std::string::npos) {
+            data.push_back(stod(replaceChars(word, 'D', 'e')));
+            continue;
+        }
+        if (word.find('E') != std::string::npos) {
+            data.push_back(stod(replaceChars(word, 'E', 'e')));
+            continue;
+        }
+        if (word.find('e') != std::string::npos) {
+            data.push_back(stod(word));
+            continue;
+        }
+        else {
+            continue;
+        }
     }
+    word.clear();
     return data;
 }
 
 
 //=======================================================================================
-// Epoch Time Matcher, returns index of most appropriate data from Navigation vector
-int Rinex3Nav::EpochMatcher(double obsTime, std::vector<Rinex3Nav::DataGPS> NAV) {
+template<typename T>
+int epochMatcherHelper(double obsTime, std::vector<T> NAV){
     // Initialize time difference variable using arbitrary large number
     double diff = 1000000; int index = 0;
     for (unsigned i = 0; i < NAV.size(); i++) {
@@ -66,51 +82,26 @@ int Rinex3Nav::EpochMatcher(double obsTime, std::vector<Rinex3Nav::DataGPS> NAV)
     }
     // Index of most appropriate Nav vector
     return index;
+}
+
+// Epoch Time Matcher, returns index of most appropriate data from Navigation vector
+int Rinex3Nav::EpochMatcher(double obsTime, std::vector<Rinex3Nav::DataGPS> NAV) {
+    return epochMatcherHelper(obsTime,NAV);
 }
 
 // Epoch Time Matcher, returns index of most appropriate data from Navigation vector
 int Rinex3Nav::EpochMatcher(double obsTime, std::vector<Rinex3Nav::DataGLO> NAV) {
-    // Initialize time difference variable using arbitrary large number
-    double diff = 1000000; int index = 0;
-    for (unsigned i = 0; i < NAV.size(); i++) {
-        double new_diff = fabs(obsTime - NAV.at(i).gpsTime);
-        if (new_diff < diff) {
-            diff = new_diff; // update difference
-            index = i; // save index
-        }
-    }
-    // Index of most appropriate Nav vector
-    return index;
+    return epochMatcherHelper(obsTime,NAV);
 }
 
 // Epoch Time Matcher, returns index of most appropriate data from Navigation vector
 int Rinex3Nav::EpochMatcher(double obsTime, std::vector<Rinex3Nav::DataGAL> NAV) {
-    // Initialize time difference variable using arbitrary large number
-    double diff = 1000000; int index = 0;
-    for (unsigned i = 0; i < NAV.size(); i++) {
-        double new_diff = fabs(obsTime - NAV.at(i).gpsTime);
-        if (new_diff < diff) {
-            diff = new_diff; // update difference
-            index = i; // save index
-        }
-    }
-    // Index of most appropriate Nav vector
-    return index;
+    return epochMatcherHelper(obsTime,NAV);
 }
 
 // Epoch Time Matcher, returns index of most appropriate data from Navigation vector
 int Rinex3Nav::EpochMatcher(double obsTime, std::vector<Rinex3Nav::DataBEI> NAV) {
-    // Initialize time difference variable using arbitrary large number
-    double diff = 1000000; int index = 0;
-    for (unsigned i = 0; i < NAV.size(); i++) {
-        double new_diff = fabs(obsTime - NAV.at(i).gpsTime);
-        if (new_diff < diff) {
-            diff = new_diff; // update difference
-            index = i; // save index
-        }
-    }
-    // Index of most appropriate Nav vector
-    return index;
+    return epochMatcherHelper(obsTime,NAV);
 }
 //=======================================================================================
 
@@ -124,52 +115,62 @@ Rinex3Nav::DataGPS epochNavOrganizerGPS(vector<string> block) {
     vector<double> epochInfo = rinex3EpochTimeOrganizer(block[0]);
     string line = block[0].substr(23, block[0].length());
     for (unsigned int i = 1; i < block.size(); i++) {
-        if (block[i].at(0) !=  '-'){
+        if (block[i].at(0) !=  '-' && block[i].at(0) != ' '){
             line += ' ' + block[i];
             continue;
         }
         line += block[i];
     }
-    vector<double> parameters = rinex3NavDataSplitter(line);
+    vector<std::optional<double>> parameters = rinex3NavDataSplitter(line);
     // Storing Values into GPS Data Structure
     Rinex3Nav::DataGPS GPS;
-    GPS.isAvailable = true;
     GPS.PRN = prn;
     GPS.epochInfo = epochInfo;
     GPS.gpsTime = gpsTime(epochInfo);
-    GPS.clockBias = parameters.at(0);
-    GPS.clockDrift = parameters.at(1);
-    GPS.clockDriftRate = parameters.at(2);
-    GPS.IODE = parameters.at(3);
-    GPS.Crs = parameters.at(4);
-    GPS.Delta_n = parameters.at(5);
-    GPS.M0 = parameters.at(6);
-    GPS.Cuc = parameters.at(7);
-    GPS.Eccentricity = parameters.at(8);
-    GPS.Cus = parameters.at(9);
-    GPS.Sqrt_a = parameters.at(10);
-    GPS.TOE = parameters.at(11);
-    GPS.Cic = parameters.at(12);
-    GPS.OMEGA0 = parameters.at(13);
-    GPS.Cis = parameters.at(14);
-    GPS.i0 = parameters.at(15);
-    GPS.Crc = parameters.at(16);
-    GPS.omega = parameters.at(17);
-    GPS.OMEGA_DOT = parameters.at(18);
-    GPS.IDOT = parameters.at(19);
-    GPS.L2_codes_channel = parameters.at(20);
-    GPS.GPS_week = parameters.at(21);
-    GPS.L2_P_data_flag = parameters.at(22);
-    GPS.svAccuracy = parameters.at(23);
-    GPS.svHealth = parameters.at(24);
-    GPS.TGD = parameters.at(25);
-    GPS.IODC = parameters.at(26);
-    GPS.transmission_time = parameters.at(27);
-    ///!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    if (parameters.size() == 29)
-        GPS.fit_interval = parameters.at(28);
-    else GPS.fit_interval = 0;
-    //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    GPS.clockBias = parameters.at(0).value();
+    GPS.clockDrift = parameters.at(1).value();
+    GPS.clockDriftRate = parameters.at(2).value();
+
+    GPS.IODE = parameters.at(3).value();
+    GPS.Crs = parameters.at(4).value();
+    GPS.Delta_n = parameters.at(5).value();
+    GPS.M0 = parameters.at(6).value();
+
+    GPS.Cuc = parameters.at(7).value();
+    GPS.Eccentricity = parameters.at(8).value();
+    GPS.Cus = parameters.at(9).value();
+    GPS.Sqrt_a = parameters.at(10).value();
+
+    GPS.TOE = parameters.at(11).value();
+    GPS.Cic = parameters.at(12).value();
+    GPS.OMEGA0 = parameters.at(13).value();
+    GPS.Cis = parameters.at(14).value();
+
+    GPS.i0 = parameters.at(15).value();
+    GPS.Crc = parameters.at(16).value();
+    GPS.omega = parameters.at(17).value();
+    GPS.OMEGA_DOT = parameters.at(18).value();
+
+    GPS.IDOT = parameters.at(19).value();
+    GPS.L2_codes_channel = parameters.at(20).value();
+    GPS.GPS_week = parameters.at(21).value();
+    GPS.L2_P_data_flag = parameters.at(22).value();
+
+    GPS.svAccuracy = parameters.at(23).value();
+    GPS.svHealth = parameters.at(24).value();
+    GPS.TGD = parameters.at(25).value();
+    GPS.IODC = parameters.at(26).value();
+
+    GPS.transmission_time = parameters.at(27).value();
+    //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    if(parameters.size() > 28 && parameters.at(28).has_value())
+        GPS.fit_interval = parameters.at(28).value();
+    if(parameters.size() > 29 && parameters.at(29).has_value())
+        GPS.spare1 = parameters.at(29).value();
+    if(parameters.size() > 30 && parameters.at(30).has_value())
+        GPS.spare2 = parameters.at(30).value();
+
+    GPS.isAvailable = true;
     return GPS;
 }
 
@@ -210,7 +211,7 @@ void Rinex3Nav::readGPS(std::ifstream& infile) {
             continue;
         }
         // Finding Ionophseric Constants as per new format
-        else if (found_IONO != string::npos) {
+        if (found_IONO != string::npos) {
             size_t found_GPSA = line.find(sTokenGPSA);
             size_t found_GPSB = line.find(sTokenGPSB);
             if (found_GPSA != string::npos) {
@@ -219,18 +220,22 @@ void Rinex3Nav::readGPS(std::ifstream& infile) {
             if (found_GPSB != string::npos) {
                 _headerGPS.ibeta = headerHelperGPS(line);
             }
+            continue;
         }
         // Finding GPS to UTC Time Correction
-        else if (found_CORR != string::npos) {
+        if (found_CORR != string::npos) {
             size_t found_GPUT = line.find("GPUT");
             _headerGPS.GPUT = headerHelperGPS(line);
+            continue;
         }
-        // Finding End of Header Info
-        else if (found_END != string::npos) {
-            break;
-        } else if (found_LEAP != string::npos) {
+        if (found_LEAP != string::npos) {
             line = line.substr(0, 7);
             _headerGPS.leapSec = stod(line);
+            continue;
+        }
+        // Finding End of Header Info
+        if (found_END != string::npos) {
+            break;
         }
     }
 
@@ -281,33 +286,36 @@ Rinex3Nav::DataGLO epochNavOrganizerGLO(vector<string> block) {
     vector<double> epochInfo = rinex3EpochTimeOrganizer(block[0]);
     string line = block[0].substr(23, block[0].length());
     for (unsigned int i = 1; i < block.size(); i++) {
-        if (block[i].at(0) !=  '-'){
+        if (block[i].at(0) !=  '-' && block[i].at(0) != ' '){
             line += ' ' + block[i];
             continue;
         }
         line += block[i];
     }
-    vector<double> parameters = rinex3NavDataSplitter(line);
+    vector<std::optional<double>> parameters = rinex3NavDataSplitter(line);
     // Storing Values into GPS Data Structure
     Rinex3Nav::DataGLO GLO;
     GLO.PRN = prn;
     GLO.epochInfo = epochInfo;
     GLO.gpsTime = gpsTime(epochInfo);
-    GLO.clockBias = parameters.at(0);
-    GLO.relFreqBias = parameters.at(1);
-    GLO.messageFrameTime = parameters.at(2);
-    GLO.satPosX = parameters.at(3);
-    GLO.satVelX = parameters.at(4);
-    GLO.satAccX = parameters.at(5);
-    GLO.satHealth = parameters.at(6);
-    GLO.satPosY = parameters.at(7);
-    GLO.satVelY = parameters.at(8);
-    GLO.satAccY = parameters.at(9);
-    GLO.freqNum = parameters.at(10);
-    GLO.satPosZ = parameters.at(11);
-    GLO.satVelZ = parameters.at(12);
-    GLO.satAccZ = parameters.at(13);
-    GLO.infoAge = parameters.at(14);
+    GLO.clockBias = parameters.at(0).value();
+    GLO.relFreqBias = parameters.at(1).value();
+    GLO.messageFrameTime = parameters.at(2).value();
+
+    GLO.satPosX = parameters.at(3).value();
+    GLO.satVelX = parameters.at(4).value();
+    GLO.satAccX = parameters.at(5).value();
+    GLO.satHealth = parameters.at(6).value();
+
+    GLO.satPosY = parameters.at(7).value();
+    GLO.satVelY = parameters.at(8).value();
+    GLO.satAccY = parameters.at(9).value();
+    GLO.freqNum = parameters.at(10).value();
+
+    GLO.satPosZ = parameters.at(11).value();
+    GLO.satVelZ = parameters.at(12).value();
+    GLO.satAccZ = parameters.at(13).value();
+    GLO.infoAge = parameters.at(14).value();
 
     GLO.isAvailable = true;
     return GLO;
@@ -343,21 +351,23 @@ void Rinex3Nav::readGLO(std::ifstream& infile) {
             continue;
         }
         // Finding Time Correction
-        else if (found_CORR != string::npos) {
+        if (found_CORR != string::npos) {
             line = line.substr(0, 60);
             // Splitting words in the line
             istringstream iss(line);
             vector<string> dataS{ istream_iterator<string>{iss}, istream_iterator<string>{} };
             for (string &s : dataS) { _headerGLO.TimeCorr.push_back(stod(s)); }
             dataS.clear();
+            continue;
         }
         // Finding Leap Second
-        else if (found_LEAP != string::npos) {
+        if (found_LEAP != string::npos) {
             line = line.substr(0, 7);
             _headerGLO.leapSec = stod(line);
+            continue;
         }
         // Finding End of Header Info
-        else if (found_END != string::npos) {
+        if (found_END != string::npos) {
             break;
         }
     }
@@ -409,44 +419,60 @@ Rinex3Nav::DataGAL epochNavOrganizerGAL(vector<string> block) {
     vector<double> epochInfo = rinex3EpochTimeOrganizer(block[0]);
     string line = block[0].substr(23, block[0].length());
     for (unsigned int i = 1; i < block.size(); i++) {
-        if (block[i].at(0) !=  '-'){
+        if (block[i].at(0) !=  '-' && block[i].at(0) != ' '){
             line += ' ' + block[i];
             continue;
         }
         line += block[i];
     }
-    vector<double> parameters = rinex3NavDataSplitter(line);
+    vector<std::optional<double>> parameters = rinex3NavDataSplitter(line);
     // Storing Values into GAL Data Structure
     Rinex3Nav::DataGAL GAL;
     GAL.PRN = prn;
     GAL.epochInfo = epochInfo;
     GAL.gpsTime = gpsTime(epochInfo);
-    GAL.clockBias = parameters.at(0);
-    GAL.clockDrift = parameters.at(1);
-    GAL.clockDriftRate = parameters.at(2);
-    GAL.IOD = parameters.at(3);
-    GAL.Crs = parameters.at(4);
-    GAL.Delta_n = parameters.at(5);
-    GAL.M0 = parameters.at(6);
-    GAL.Cuc = parameters.at(7);
-    GAL.Eccentricity = parameters.at(8);
-    GAL.Cus = parameters.at(9);
-    GAL.Sqrt_a = parameters.at(10);
-    GAL.TOE = parameters.at(11);
-    GAL.Cic = parameters.at(12);
-    GAL.OMEGA0 = parameters.at(13);
-    GAL.Cis = parameters.at(14);
-    GAL.i0 = parameters.at(15);
-    GAL.Crc = parameters.at(16);
-    GAL.omega = parameters.at(17);
-    GAL.OMEGA_DOT = parameters.at(18);
-    GAL.IDOT = parameters.at(19);
-    GAL.GAL_week = parameters.at(21);
-    GAL.SISA = parameters.at(22);
-    GAL.svHealth = parameters.at(23);
-    GAL.BGD_E5a = parameters.at(24);
-    GAL.BGD_E5b = parameters.at(25);
-    GAL.transmission_time = parameters.at(26);
+    GAL.clockBias = parameters.at(0).value();
+    GAL.clockDrift = parameters.at(1).value();
+    GAL.clockDriftRate = parameters.at(2).value();
+
+    GAL.IOD = parameters.at(3).value();
+    GAL.Crs = parameters.at(4).value();
+    GAL.Delta_n = parameters.at(5).value();
+    GAL.M0 = parameters.at(6).value();
+
+    GAL.Cuc = parameters.at(7).value();
+    GAL.Eccentricity = parameters.at(8).value();
+    GAL.Cus = parameters.at(9).value();
+    GAL.Sqrt_a = parameters.at(10).value();
+
+    GAL.TOE = parameters.at(11).value();
+    GAL.Cic = parameters.at(12).value();
+    GAL.OMEGA0 = parameters.at(13).value();
+    GAL.Cis = parameters.at(14).value();
+
+    GAL.i0 = parameters.at(15).value();
+    GAL.Crc = parameters.at(16).value();
+    GAL.omega = parameters.at(17).value();
+    GAL.OMEGA_DOT = parameters.at(18).value();
+
+    GAL.IDOT = parameters.at(19).value();
+    GAL.Data_sources = parameters.at(20).value();
+    GAL.GAL_week = parameters.at(21).value();
+    if(parameters.at(22).has_value())
+        GAL.spare1 = parameters.at(22).value();
+
+    GAL.SISA = parameters.at(23).value();
+    GAL.svHealth = parameters.at(24).value();
+    GAL.BGD_E5a = parameters.at(25).value();
+    GAL.BGD_E5b = parameters.at(26).value();
+
+    GAL.transmission_time = parameters.at(27).value();
+    if(parameters.size() > 28 && parameters.at(28).has_value())
+        GAL.spare2 = parameters.at(28).value();
+    if(parameters.size() > 29 && parameters.at(29).has_value())
+        GAL.spare3 = parameters.at(29).value();
+    if(parameters.size() > 30 && parameters.at(30).has_value())
+        GAL.spare4 = parameters.at(30).value();
 
     GAL.isAvailable = true;
     return GAL;
@@ -482,6 +508,7 @@ void Rinex3Nav::readGAL(std::ifstream& infile) {
         else if (found_LEAP != string::npos) {
             line = line.substr(0, 7);
             _headerGLO.leapSec = stod(line);
+            continue;
         }
         // Finding End of Header Info
         else if (found_END != string::npos) {
@@ -522,7 +549,6 @@ void Rinex3Nav::readGAL(std::ifstream& infile) {
             }
         }
     }
-    // Update the attribute of Navigation Object
     _navGAL = mapGAL;
 }
 //=======================================================================================
@@ -535,62 +561,65 @@ Rinex3Nav::DataBEI epochNavOrganizerBEI(vector<string> block) {
     vector<double> epochInfo = rinex3EpochTimeOrganizer(block[0]);
     string line = block[0].substr(23, block[0].length());
     for (unsigned int i = 1; i < block.size(); i++) {
-        if (block[i].at(0) !=  '-'){
+        if (block[i].at(0) !=  '-' && block[i].at(0) != ' '){
             line += ' ' + block[i];
             continue;
         }
         line += block[i];
     }
-    vector<double> parameters = rinex3NavDataSplitter(line);
+    vector<std::optional<double>> parameters = rinex3NavDataSplitter(line);
     // Storing Values into BEI Data Structure
     Rinex3Nav::DataBEI BEI;
     BEI.PRN = prn;
     BEI.epochInfo = epochInfo;
     BEI.gpsTime = gpsTime(epochInfo);
-    BEI.clockBias = parameters.at(0);
-    BEI.clockDrift = parameters.at(1);
-    BEI.clockDriftRate = parameters.at(2);
+    BEI.clockBias = parameters.at(0).value();
+    BEI.clockDrift = parameters.at(1).value();
+    BEI.clockDriftRate = parameters.at(2).value();
 
-    BEI.AODE = parameters.at(3);
-    BEI.Crs = parameters.at(4);
-    BEI.Delta_n = parameters.at(5);
-    BEI.M0 = parameters.at(6);
+    BEI.AODE = parameters.at(3).value();
+    BEI.Crs = parameters.at(4).value();
+    BEI.Delta_n = parameters.at(5).value();
+    BEI.M0 = parameters.at(6).value();
 
-    BEI.Cuc = parameters.at(7);
-    BEI.Eccentricity = parameters.at(8);
-    BEI.Cus = parameters.at(9);
-    BEI.Sqrt_a = parameters.at(10);
+    BEI.Cuc = parameters.at(7).value();
+    BEI.Eccentricity = parameters.at(8).value();
+    BEI.Cus = parameters.at(9).value();
+    BEI.Sqrt_a = parameters.at(10).value();
 
-    BEI.TOE = parameters.at(11);
-    BEI.Cic = parameters.at(12);
-    BEI.OMEGA0 = parameters.at(13);
-    BEI.Cis = parameters.at(14);
+    BEI.TOE = parameters.at(11).value();
+    BEI.Cic = parameters.at(12).value();
+    BEI.OMEGA0 = parameters.at(13).value();
+    BEI.Cis = parameters.at(14).value();
 
-    BEI.i0 = parameters.at(15);
-    BEI.Crc = parameters.at(16);
-    BEI.omega = parameters.at(17);
-    BEI.OMEGA_DOT = parameters.at(18);
+    BEI.i0 = parameters.at(15).value();
+    BEI.Crc = parameters.at(16).value();
+    BEI.omega = parameters.at(17).value();
+    BEI.OMEGA_DOT = parameters.at(18).value();
 
-    BEI.IDOT = parameters.at(19);
-    BEI.spare1 = parameters.at(20);
-    BEI.BDT_week = parameters.at(21);
-    BEI.spare2 = parameters.at(22);
+    BEI.IDOT = parameters.at(19).value();
+    if(parameters.at(20).has_value())
+        BEI.spare1 = parameters.at(20).value();
+    BEI.BDT_week = parameters.at(21).value();
+    if(parameters.at(22).has_value())
+        BEI.spare2 = parameters.at(22).value();
 
-    BEI.SVaccuracy = parameters.at(23);
-    BEI.SatH1 = parameters.at(24);
-    BEI.TGD1 = parameters.at(25);
-    BEI.TGD2 = parameters.at(26);
+    BEI.SVaccuracy = parameters.at(23).value();
+    BEI.SatH1 = parameters.at(24).value();
+    BEI.TGD1 = parameters.at(25).value();
+    BEI.TGD2 = parameters.at(26).value();
 
-    BEI.transmission_time = parameters.at(26);
-    BEI.AODC = parameters.at(26);
-    BEI.spare3 = parameters.at(26);
-    BEI.spare4 = parameters.at(26);
+    BEI.transmission_time = parameters.at(27).value();
+    BEI.AODC = parameters.at(28).value();
+    if(parameters.size() > 29 && parameters.at(29).has_value())
+        BEI.spare3 = parameters.at(29).value();
+    if(parameters.size() > 30 && parameters.at(30).has_value())
+        BEI.spare4 = parameters.at(30).value();
 
 
     BEI.isAvailable = true;
     return BEI;
 }
-
 
 void Rinex3Nav::readBEI(std::ifstream& infile)
 {
@@ -621,21 +650,23 @@ void Rinex3Nav::readBEI(std::ifstream& infile)
             continue;
         }
         // Finding Time Correction
-        else if (found_CORR != string::npos) {
+        if (found_CORR != string::npos) {
             line = line.substr(0, 60);
             // Splitting words in the line
             istringstream iss(line);
             vector<string> dataS{ istream_iterator<string>{iss}, istream_iterator<string>{} };
             for (string &s : dataS) { _headerBEI.TimeCorr.push_back(stod(s)); }
             dataS.clear();
+            continue;
         }
         // Finding Leap Second
-        else if (found_LEAP != string::npos) {
+        if (found_LEAP != string::npos) {
             line = line.substr(0, 7);
             _headerBEI.leapSec = stod(line);
+            continue;
         }
         // Finding End of Header Info
-        else if (found_END != string::npos) {
+        if (found_END != string::npos) {
             break;
         }
     }
@@ -655,7 +686,7 @@ void Rinex3Nav::readBEI(std::ifstream& infile)
         }
         block.push_back(line);
         // New block of navigation message
-        if (nlines == 4) {
+        if (nlines == 8) {
             // Now we must process the block of lines
             Rinex3Nav::DataBEI BEI = epochNavOrganizerBEI(block);
             block.clear(); nlines = 0;
@@ -674,7 +705,6 @@ void Rinex3Nav::readBEI(std::ifstream& infile)
             }
         }
     }
-    // Update the attribute of Navigation Object
     _navBEI = mapBEI;
 }
 //=======================================================================================
@@ -716,7 +746,7 @@ void Rinex3Nav::readMixed(std::ifstream& infile) {
             continue;
         }
         // Finding Ionophseric Constants as per new format
-        else if (found_IONO != string::npos) {
+        if (found_IONO != string::npos) {
             size_t found_GPSA = line.find(sTokenGPSA);
             size_t found_GPSB = line.find(sTokenGPSB);
             if (found_GPSA != string::npos) {
@@ -725,17 +755,21 @@ void Rinex3Nav::readMixed(std::ifstream& infile) {
             if (found_GPSB != string::npos) {
                 _headerGPS.ibeta = headerHelperGPS(line);
             }
+            continue;
         }
         // Finding GPS to UTC Time Correction
-        else if (found_CORR != string::npos) {
+        if (found_CORR != string::npos) {
             size_t found_GPUT = line.find("GPUT");
             _headerGPS.GPUT = headerHelperGPS(line);
-        } else if (found_LEAP != string::npos) {
+            continue;
+        }
+        if (found_LEAP != string::npos) {
             line = line.substr(0, 7);
             _headerBEI.leapSec = stod(line);
+            continue;
         }
         // Finding End of Header Info
-        else if (found_END != string::npos) {
+        if (found_END != string::npos) {
             break;
         }
     }
@@ -889,7 +923,7 @@ void Rinex3Nav::readMixed(std::ifstream& infile) {
                     block.clear(); line.clear();
                     // Add organized data to data holder
                     // Save to Map: if PRN exists in map, then add NavInfo to vector of structs
-                    // Else add new PRN as key and GAL data structure as Value
+                    // Else add new PRN as key and BEI data structure as Value
                     if (mapBEI.find(BEI.PRN) == mapBEI.end()) {
                         // not found, therefore insert PRN and corresponding value
                         vector<DataBEI> mapNavVector; mapNavVector.push_back(BEI);
@@ -926,11 +960,175 @@ void Rinex3Nav::clear()
     _headerGPS.GPUT.clear();
     _headerGPS.ialpha.clear();
     _headerGPS.ibeta.clear();
+    _headerBEI.TimeCorr.clear();
+    _headerBEI.leapSec = NULL;
 
     _navGAL.clear();
     _navGLO.clear();
     _navGPS.clear();
+    _navBEI.clear();
 }
 
 
 
+std::vector<std::optional<double>> Rinex3Nav::DataGPS::toVec()
+{
+    std::vector<std::optional<double>> vecData;
+    vecData.push_back(clockBias);
+    vecData.push_back(clockDrift);
+    vecData.push_back(clockDriftRate);
+
+    vecData.push_back(IODE);
+    vecData.push_back(Crs);
+    vecData.push_back(Delta_n);
+    vecData.push_back(M0);
+
+    vecData.push_back(Cuc);
+    vecData.push_back(Eccentricity);
+    vecData.push_back(Cus);
+    vecData.push_back(Sqrt_a);
+
+    vecData.push_back(TOE);
+    vecData.push_back(Cic);
+    vecData.push_back(OMEGA0);
+    vecData.push_back(Cis);
+
+    vecData.push_back(i0);
+    vecData.push_back(Crc);
+    vecData.push_back(omega);
+    vecData.push_back(OMEGA_DOT);
+
+    vecData.push_back(IDOT);
+    vecData.push_back(L2_codes_channel);
+    vecData.push_back(GPS_week);
+    vecData.push_back(L2_P_data_flag);
+
+    vecData.push_back(svAccuracy);
+    vecData.push_back(svHealth);
+    vecData.push_back(TGD);
+    vecData.push_back(IODC);
+
+    vecData.push_back(transmission_time);
+    vecData.push_back(fit_interval);
+    vecData.push_back(spare1);
+    vecData.push_back(spare2);
+
+    return vecData;
+}
+
+std::vector<std::optional<double>> Rinex3Nav::DataGLO::toVec()
+{
+    std::vector<std::optional<double>> vecData;
+    vecData.push_back(clockBias);
+    vecData.push_back(relFreqBias);
+    vecData.push_back(messageFrameTime);
+
+    vecData.push_back(satPosX);
+    vecData.push_back(satVelX);
+    vecData.push_back(satAccX);
+    vecData.push_back(satHealth);
+
+    vecData.push_back(satPosY);
+    vecData.push_back(satVelY);
+    vecData.push_back(satAccY);
+    vecData.push_back(freqNum);
+
+    vecData.push_back(satPosZ);
+    vecData.push_back(satVelZ);
+    vecData.push_back(satAccZ);
+    vecData.push_back(infoAge);
+
+    return vecData;
+}
+
+std::vector<std::optional<double>> Rinex3Nav::DataGAL::toVec()
+{
+    std::vector<std::optional<double>> vecData;
+    vecData.push_back(clockBias);
+    vecData.push_back(clockDrift);
+    vecData.push_back(clockDriftRate);
+
+    vecData.push_back(IOD);
+    vecData.push_back(Crs);
+    vecData.push_back(Delta_n);
+    vecData.push_back(M0);
+
+    vecData.push_back(Cuc);
+    vecData.push_back(Eccentricity);
+    vecData.push_back(Cus);
+    vecData.push_back(Sqrt_a);
+
+    vecData.push_back(TOE);
+    vecData.push_back(Cic);
+    vecData.push_back(OMEGA0);
+    vecData.push_back(Cis);
+
+    vecData.push_back(i0);
+    vecData.push_back(Crc);
+    vecData.push_back(omega);
+    vecData.push_back(OMEGA_DOT);
+
+    vecData.push_back(IDOT);
+    vecData.push_back(Data_sources);
+    vecData.push_back(GAL_week);
+    vecData.push_back(spare1);
+
+    vecData.push_back(SISA);
+    vecData.push_back(svHealth);
+    vecData.push_back(BGD_E5a);
+    vecData.push_back(BGD_E5b);
+
+    vecData.push_back(transmission_time);
+    vecData.push_back(spare2);
+    vecData.push_back(spare3);
+    vecData.push_back(spare4);
+
+
+    return vecData;
+}
+
+std::vector<std::optional<double>> Rinex3Nav::DataBEI::toVec()
+{
+    std::vector<std::optional<double>> vecData;
+    vecData.push_back(clockBias);
+    vecData.push_back(clockDrift);
+    vecData.push_back(clockDriftRate);
+
+    vecData.push_back(AODE);
+    vecData.push_back(Crs);
+    vecData.push_back(Delta_n);
+    vecData.push_back(M0);
+
+    vecData.push_back(Cuc);
+    vecData.push_back(Eccentricity);
+    vecData.push_back(Cus);
+    vecData.push_back(Sqrt_a);
+
+    vecData.push_back(TOE);
+    vecData.push_back(Cic);
+    vecData.push_back(OMEGA0);
+    vecData.push_back(Cis);
+
+    vecData.push_back(i0);
+    vecData.push_back(Crc);
+    vecData.push_back(omega);
+    vecData.push_back(OMEGA_DOT);
+
+    vecData.push_back(IDOT);
+    vecData.push_back(spare1);
+    vecData.push_back(BDT_week);
+    vecData.push_back(spare2);
+
+    vecData.push_back(SVaccuracy);
+    vecData.push_back(SatH1);
+    vecData.push_back(TGD1);
+    vecData.push_back(TGD2);
+
+    vecData.push_back(transmission_time);
+    vecData.push_back(AODC);
+    vecData.push_back(spare3);
+    vecData.push_back(spare4);
+
+
+    return vecData;
+}

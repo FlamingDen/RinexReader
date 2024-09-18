@@ -2,6 +2,7 @@
 
 #include "timeutils.h"
 #include "stringutils.h"
+#include <optional>
 
 #ifndef RINEX3NAV_H_
 #define RINEX3NAV_H_
@@ -17,6 +18,7 @@ public:
     //GPS
     struct DataGPS {
         bool isAvailable;
+        const int SatelliteSystem = 1;
 
         //==================SV / EPOCH / SV CLK=============
         int PRN;
@@ -64,11 +66,16 @@ public:
 
         //==================BROADCAST ORBIT – 7=============
         double transmission_time;
-        double fit_interval;
+        std::optional<double> fit_interval;
+        std::optional<double> spare1;
+        std::optional<double> spare2;
+
+        std::vector<std::optional<double>> toVec();
     };
     //Glonass
     struct DataGLO {
         bool isAvailable;
+        const int SatelliteSystem = 3;
 
         //==================SV / EPOCH / SV CLK=============
         int PRN;
@@ -95,10 +102,13 @@ public:
         double satVelZ;
         double satAccZ;
         double infoAge;
+
+        std::vector<std::optional<double>> toVec();
     };
     //Galileo
     struct DataGAL {
         bool isAvailable;
+        const int SatelliteSystem = 2;
 
         //==================SV / EPOCH / SV CLK=============
         int PRN;
@@ -136,7 +146,7 @@ public:
         double IDOT;
         double Data_sources;
         double GAL_week;
-        double spare1;
+        std::optional<double> spare1;
 
         //==================BROADCAST ORBIT – 6=============
         double SISA;
@@ -146,14 +156,17 @@ public:
 
         //==================BROADCAST ORBIT – 7=============
         double transmission_time;
-        double spare2;
-        double spare3;
-        double spare4;
+        std::optional<double> spare2;
+        std::optional<double> spare3;
+        std::optional<double> spare4;
         //also have 3 spare places
+
+        std::vector<std::optional<double>> toVec();
     };
     //BeiDou
     struct DataBEI {
         bool isAvailable;
+        const int SatelliteSystem = 4;
 
         //==================SV / EPOCH / SV CLK=============
         int PRN;
@@ -189,9 +202,9 @@ public:
 
         //==================BROADCAST ORBIT – 5=============
         double IDOT;
-        double spare1;
+        std::optional<double> spare1;
         double BDT_week;
-        double spare2;
+        std::optional<double> spare2;
 
         //==================BROADCAST ORBIT – 6=============
         double SVaccuracy;
@@ -202,8 +215,10 @@ public:
         //==================BROADCAST ORBIT – 7=============
         double transmission_time;
         double AODC;
-        double spare3;
-        double spare4;
+        std::optional<double> spare3;
+        std::optional<double> spare4;
+
+        std::vector<std::optional<double>> toVec();
     };
 
     // Headers
