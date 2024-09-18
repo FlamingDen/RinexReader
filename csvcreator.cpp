@@ -75,7 +75,7 @@ void createCSVHelperNav(std::map<int, std::vector<T>> _nav, std::ofstream& out, 
         typename std::vector<T>::iterator satIt = it->second.begin();
         for(satIt = it->second.begin(); satIt != it->second.end(); satIt++){
             //prn
-            QString prn = getSatelliteSystemShort(satIt->PRN) + QString("%1").arg(satIt->PRN,2,10,QChar('0'));
+            QString prn = getSatelliteSystemShort(satIt->SatelliteSystem) + QString("%1").arg(satIt->PRN,2,10,QChar('0'));
             //datetime
             std::vector<double> time = satIt->epochInfo;
             QDateTime dt(QDate(time.at(0),time.at(1),time.at(2)),QTime(time.at(3),time.at(4),time.at(5)));
