@@ -1132,3 +1132,33 @@ std::vector<std::optional<double>> Rinex3Nav::DataBEI::toVec()
 
     return vecData;
 }
+
+
+ViewNav::ViewNav(){}
+
+ViewNav &ViewNav::operator=(const Rinex3Nav &other)
+{
+    this->_headerGPS = other._headerGPS;
+    this->_headerGLO = other._headerGLO;
+    this->_headerGAL = other._headerGAL;
+    this->_headerBEI = other._headerBEI;
+
+    this->_navGPS = other._navGPS;
+    this->_navGLO = other._navGLO;
+    this->_navGAL = other._navGAL;
+    this->_navBEI = other._navBEI;
+    return *this;
+}
+
+ViewNav::ViewNav(const Rinex3Nav &other)
+{
+    this->_headerGPS = other._headerGPS;
+    this->_headerGLO = other._headerGLO;
+    this->_headerGAL = other._headerGAL;
+    this->_headerBEI = other._headerBEI;
+
+    this->_navGPS = other._navGPS;
+    this->_navGLO = other._navGLO;
+    this->_navGAL = other._navGAL;
+    this->_navBEI = other._navBEI;
+}

@@ -3,6 +3,7 @@
 #include "pch.h"
 #include "timeutils.h"
 #include "stringutils.h"
+#include <optional>
 
 #ifndef RINEX3OBS_H_
 #define RINEX3OBS_H_
@@ -26,7 +27,7 @@ public:
     // To store observations in an epoch
     struct ObsEpochInfo {
         std::vector<double> epochRecord;
-        double recClockOffset;
+        std::optional<double> recClockOffset;
         double gpsTime;
         int numSatsGPS;
         int numSatsGLO;

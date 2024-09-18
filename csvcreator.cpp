@@ -84,7 +84,7 @@ void createCSVHelperNav(std::map<int, std::vector<T>> _nav, std::ofstream& out, 
             //QList<double> navList(vec.begin(),vec.end());
             QString strNavData;
             foreach (std::optional<double> x, vec){
-                x.has_value() ? strNavData = strNavData.append("%1%2").arg(QString::number(x.value(),'f',19), sep) :
+                x.has_value() ? strNavData = strNavData.append("%1%2").arg(QString::number(x.value(),'f',30), sep) :
                                 strNavData = strNavData.append("%1%2").arg("", sep);
             }
             strNavData.remove(strNavData.size()-1,1);

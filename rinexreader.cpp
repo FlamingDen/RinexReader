@@ -83,10 +83,13 @@ const Rinex3Obs::ObsHeaderInfo& RinexReader::getObsHeaderInfo()
     return obs._Header;
 }
 
-QList<Rinex3Obs::ObsEpochInfo> RinexReader::getEpochs()
+const QList<Rinex3Obs::ObsEpochInfo>& RinexReader::getEpochs()
 {
-    QList<Rinex3Obs::ObsEpochInfo> epochs;
+    //QList<Rinex3Obs::ObsEpochInfo> epochs;
     if (!path_obs.isEmpty() && fin_obs.is_open()){
+        if(!epochs.isEmpty())
+            return epochs;
+
         obs.clear(obs._Header);
 
         obs.obsHeader(fin_obs);
@@ -119,7 +122,7 @@ void RinexReader::saveAsCSV(QString pathToSave, RinexType type, QString sep)
     }
     case RinexType::NAVIGATION: {
         if(!paths_nav.isEmpty() && checkVersion(type)){
-            CSVnav csv_nav(getNav(), sep);
+            CSVnav csv_nav(nav, sep);
             csv_nav.createCSV(pathToSave);
         }
         break;
@@ -192,6 +195,7 @@ void RinexReader::readNav(int index)
 
 void RinexReader::clearObs()
 {
+    epochs.clear();
     obs.clear(obs._Header);
     obs.clear(obs._EpochObs);
     obs._obsGAL.clear();
@@ -203,18 +207,23 @@ void RinexReader::clearObs()
     obs._obsTypesGPS.clear();
     obs._obsTypesBEI.clear();
     rinex_type_obs = 0;
-    rinex_version_obs = NULL;
+    rinex_version_obs = -1;
     path_obs = "";
     fin_obs.close();
 }
 
-void RinexReader::clearNav()
+void RinexReader::clearRRNav()
 {
     nav.clear();
     rinex_type_nav = 0;
-    rinex_version_nav = NULL;
+    rinex_version_nav = -1;
     paths_nav.clear();
     fin_nav.close();
+}
+
+void RinexReader::clearNavData()
+{
+    nav.clear();
 }
 
 
@@ -222,7 +231,7 @@ void RinexReader::clearNav()
 void RinexReader::close()
 {
     clearObs();
-    clearNav();
+    clearRRNav();
 }
 
 
@@ -231,9 +240,10 @@ QString RinexReader::getPath_obs() const
     return path_obs;
 }
 
-Rinex3Nav RinexReader::getNav() const
+ViewNav RinexReader::getNav() const
 {
-    return nav;
+    ViewNav view_nav = nav;
+    return view_nav;
 }
 
 FileIO RinexReader::getFIO() const
@@ -274,7 +284,7 @@ void RinexReader::setPath_obs(QString newPath_obs)
 
 void RinexReader::setPaths_nav(const QStringList &newPaths_nav)
 {
-    clearNav();
+    clearRRNav();
     paths_nav = newPaths_nav;
     nav_counter = 0;
     init(paths_nav.at(0),RinexType::NAVIGATION);

@@ -32,16 +32,21 @@ int main(int argc, char *argv[])
     //=============================RinexReader API(sample)==========================
 
     RinexReader rr(obs,navPaths);
+
+    //QList<Rinex3Obs::ObsEpochInfo> inf = rr.getEpochs();
+
+    rr.nextNav();
+    ViewNav viewNav= rr.getNav();
+    rr.nextNav();
+    viewNav= rr.getNav();
+    rr.nextNav();
+    viewNav= rr.getNav();
+    rr.clearNavData();
+    rr.nextNav();
+    viewNav= rr.getNav();
+
     //rr.saveAsCSV(pathCSVobs, RinexType::OBSERVATION);
-
-    rr.nextNav();
-    rr.nextNav();
-    rr.nextNav();
-    rr.nextNav();
     rr.saveAsCSV(pathCSVnav, RinexType::NAVIGATION);
-
-
-
 
 /*
     //work with navigation files
@@ -100,14 +105,14 @@ void uploadDatatoDB(FacadeDB* db, RinexReader &rr){
             std::map<int,std::vector<double>> data = itEpoch->second;
             std::map<int,std::vector<double>>::iterator it = data.begin();
             for(it = data.begin(); it != data.end();it++){
-                QString code = QString(itEpoch->first.data()) + QString("%1").arg(it->first,2,10,QChar('0'));
+                QString prn = QString(itEpoch->first.data()) + QString("%1").arg(it->first,2,10,QChar('0'));
                 std::vector<double> time = listIt->epochRecord;
                 QDateTime dt(QDate(time.at(0),time.at(1),time.at(2)),QTime(time.at(3),time.at(4),time.at(5)));
                 QList<double> qdate(it->second.begin(),it->second.end());
 
-                if(!db->isExistSL(code))
-                    db->addSatellite(code);
-                db->addData(dt,code,qdate);
+                if(!db->isExistSL(prn))
+                    db->addSatellite(prn);
+                db->addData(dt,prn,qdate);
             }
         }
         std::cout << " + \n";

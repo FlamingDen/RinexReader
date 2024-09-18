@@ -23,17 +23,18 @@ public:
     RinexReader &operator=(const RinexReader& other);
 
     const Rinex3Obs::ObsHeaderInfo& getObsHeaderInfo(); //give header obs info
-    QList<Rinex3Obs::ObsEpochInfo> getEpochs();         //give you list of epochs
+    const QList<Rinex3Obs::ObsEpochInfo>& getEpochs();         //give you list of epochs
 
     void saveAsCSV(QString pathToSave, RinexType type, QString sep = ","); //save files in .csv format
 
     void nextNav();                                     // read in order, one by one
     bool readNav(QString path);                         // read anv file by path
     void readNav(int index);                            // read anv file by index
-    Rinex3Nav getNav() const;                           // give all data from nav file
+    ViewNav getNav() const;                           // give all data from nav file
 
     void clearObs();
-    void clearNav();
+    void clearRRNav();
+    void clearNavData();
 
     //Getter
     QString getPath_obs() const;
@@ -65,6 +66,9 @@ private:
     std::ifstream fin_obs;
     std::ifstream fin_nav;
     int nav_counter;
+
+    QVector<QString> satellites;
+    QList<Rinex3Obs::ObsEpochInfo> epochs;
 
     bool readObsHeader();                                   //read a header and Set position stream on beginning
 

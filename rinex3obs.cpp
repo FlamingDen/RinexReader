@@ -199,7 +199,7 @@ void rinex3SatObsOrganizer(string line, map<string, map<int, vector<double>>>& d
 void obsOrganizer(vector<string> block, Rinex3Obs::ObsEpochInfo& obs) {
     // First line contains epoch time information and receiver clock offset
     obs.epochRecord = rinex3EpochRecordOrganizer(block[0]);
-    obs.recClockOffset = obs.epochRecord.back();
+    obs.epochRecord.size() > 8 ? obs.recClockOffset = obs.epochRecord.back(): obs.recClockOffset = std::nullopt;
     // Organize satellite observations in data structure
     map<string, map<int, vector<double>>> data;
     string line;
