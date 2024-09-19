@@ -1,6 +1,9 @@
 #include "csvcreator.h"
 #include <QString>
 #include <QDateTime>
+#include"enumtypes.h"
+
+
 
 CSVCreator::CSVCreator(QString sep): sep(sep){}
 
@@ -81,7 +84,6 @@ void createCSVHelperNav(std::map<int, std::vector<T>> _nav, std::ofstream& out, 
             QDateTime dt(QDate(time.at(0),time.at(1),time.at(2)),QTime(time.at(3),time.at(4),time.at(5)));
             //nav data
             std::vector<std::optional<double>> vec = satIt->toVec();
-            //QList<double> navList(vec.begin(),vec.end());
             QString strNavData;
             foreach (std::optional<double> x, vec){
                 x.has_value() ? strNavData = strNavData.append("%1%2").arg(QString::number(x.value(),'f',30), sep) :

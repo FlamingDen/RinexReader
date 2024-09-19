@@ -1,4 +1,5 @@
 #include "rinex3nav.h"
+#include <regex>
 
 using namespace std;
 
@@ -105,7 +106,358 @@ int Rinex3Nav::EpochMatcher(double obsTime, std::vector<Rinex3Nav::DataBEI> NAV)
 }
 //=======================================================================================
 
+void Rinex3Nav::readHead(std::ifstream& infile, SatelliteSystem sys){
+    //common tokens
+    const string sTokenPGM = "PGM / RUN BY / DATE";
+    const string sTokenCOM = "COMMENT";
+    const string sTokenIONO = "IONOSPHERIC CORR";
+    const string sTokenCORR = "TIME SYSTEM CORR";
+    const string sTokenLEAP = "LEAP SECONDS";
+    const string sTokenEND = "END OF HEADER";
 
+    string line;
+
+    switch (sys) {
+    case SatelliteSystem::GPS:{
+        //iono
+        const string sTokenGPSA = "GPSA";//= GPS alpha0 - alpha3
+        const string sTokenGPSB = "GPSB";//GPS beta0 - beta3
+        //time sys core
+        const string sTokenGPUT = "GPUT";//= GPS - UTC (a0, a1)
+
+        while (!infile.eof()) {
+            line.clear();
+            // Temporarily store line from input file
+            getline(infile, line, '\n');
+            // Looking for keywords in Header Part...
+            size_t found_PGM = line.find(sTokenPGM);
+            size_t found_COM = line.find(sTokenCOM);
+            size_t found_IONO = line.find(sTokenIONO);
+            size_t found_CORR = line.find(sTokenCORR);
+            size_t found_LEAP = line.find(sTokenLEAP);
+            size_t found_END = line.find(sTokenEND);
+
+            if(found_PGM != string::npos){
+                _headerGPS.pgm = getPMGHeader(line);
+                continue;
+            }
+            // Finding Comments, meaning skip!
+            if (found_COM != string::npos){
+                continue;
+            }
+            // Finding Ionophseric Constants as per new format
+            if (found_IONO != string::npos) {
+                size_t found_GPSA = line.find(sTokenGPSA);
+                size_t found_GPSB = line.find(sTokenGPSB);
+                if (found_GPSA != string::npos) {
+                    _headerGPS.ialpha = headerHelperGPS(line);
+                }
+                if (found_GPSB != string::npos) {
+                    _headerGPS.ibeta = headerHelperGPS(line);
+                }
+                continue;
+            }
+            // Finding GPS to UTC Time Correction
+            if (found_CORR != string::npos) {
+                size_t found_GPUT = line.find(sTokenGPUT);
+                if (found_GPUT != string::npos)
+                    _headerGPS.GPUT = headerHelperGPS(line);
+                continue;
+            }
+            if (found_LEAP != string::npos) {
+                line = line.substr(0, 7);
+                _headerGPS.leapSec = stod(line);
+                continue;
+            }
+            // Finding End of Header Info
+            if (found_END != string::npos) {
+                break;
+            }
+        }
+        break;
+    }
+    case SatelliteSystem::Galileo:{
+        const string sTokenGAL = "GAL";//Galileo ai0 - ai2s
+        const string sTokenGAUT = "GAUT";//= GAL - UTC ( a0, a1)
+
+        while (!infile.eof()) {
+            line.clear();
+
+            getline(infile, line, '\n');
+
+            size_t found_PGM = line.find(sTokenPGM);
+            size_t found_COM = line.find(sTokenCOM);
+            size_t found_IONO = line.find(sTokenIONO);
+            size_t found_CORR = line.find(sTokenCORR);
+            size_t found_LEAP = line.find(sTokenLEAP);
+            size_t found_END = line.find(sTokenEND);
+
+            if(found_PGM != string::npos){
+                _headerGAL.pgm = getPMGHeader(line);
+            }
+            // Finding Comments, meaning skip!
+            if (found_COM != string::npos) {
+                continue;
+            }
+            // Finding Ionophseric Constants as per new format
+            if (found_IONO != string::npos) {
+                size_t found_GAL = line.find(sTokenGAL);
+                if (found_GAL != string::npos) {
+                    _headerGAL.gal = headerHelperGPS(line);
+                }
+                continue;
+            }
+            // Finding Time Correction
+            if (found_CORR != string::npos) {
+                size_t found_GAUT = line.find(sTokenGAUT);
+                if (found_GAUT != string::npos)
+                    _headerGAL.GAUT = headerHelperGPS(line);
+                continue;
+            }
+            // Finding Leap Second
+            if (found_LEAP != string::npos) {
+                line = line.substr(0, 7);
+                _headerGAL.leapSec = stod(line);
+                continue;
+            }
+            // Finding End of Header Info
+            if (found_END != string::npos) {
+                break;
+            }
+        }
+
+        break;
+    }
+    case SatelliteSystem::Glonass:{
+        const string sTokenGLUT = "GLUT";//= GLO - UTC (a0= -TauC, a1=zero)
+        const string sTokenGLGP = "GLGP";//= GLO - GPS (a0=TauGPS, a1=zero)
+
+        while (!infile.eof()) {
+            line.clear();
+
+            getline(infile, line, '\n');
+
+            size_t found_PGM = line.find(sTokenPGM);
+            size_t found_COM = line.find(sTokenCOM);
+            size_t found_CORR = line.find(sTokenCORR);
+            size_t found_LEAP = line.find(sTokenLEAP);
+            size_t found_END = line.find(sTokenEND);
+
+            if(found_PGM != string::npos){
+                _headerGLO.pgm = getPMGHeader(line);
+            }
+            // Finding Comments, meaning skip!
+            if (found_COM != string::npos) {
+                continue;
+            }
+            // Finding Time Correction
+            if (found_CORR != string::npos) {
+                // line = line.substr(0, 60);
+                // // Splitting words in the line
+                // istringstream iss(line);
+                // vector<string> dataS{ istream_iterator<string>{iss}, istream_iterator<string>{} };
+                // for (string &s : dataS) { _headerGLO.TimeCorr.push_back(stod(s)); }
+                // dataS.clear();
+                // continue;
+                size_t found_GLUT = line.find(sTokenGLUT);
+                if (found_GLUT != string::npos)
+                    _headerGLO.GLUT = headerHelperGPS(line);
+                continue;
+            }
+            // Finding Leap Second
+            if (found_LEAP != string::npos) {
+                line = line.substr(0, 7);
+                _headerGLO.leapSec = stod(line);
+                continue;
+            }
+            // Finding End of Header Info
+            if (found_END != string::npos) {
+                break;
+            }
+        }
+        break;
+    }
+    case SatelliteSystem::BeiDou:{
+        //iono
+        const string sTokenBDSA = "BDSA";//BDS alpha0 - alpha3
+        const string sTokenBDSB = "BDSB";//= BDS beta0 - beta3
+        //time sys cores
+        const string sTokenBDUT = "GDUT";// =BDS - UTC (a0=A0UTC, a1=A1UTC )
+
+        while (!infile.eof()) {
+            line.clear();
+
+            getline(infile, line, '\n');
+
+            size_t found_PGM = line.find(sTokenPGM);
+            size_t found_COM = line.find(sTokenCOM);
+            size_t found_IONO = line.find(sTokenIONO);
+            size_t found_CORR = line.find(sTokenCORR);
+            size_t found_LEAP = line.find(sTokenLEAP);
+            size_t found_END = line.find(sTokenEND);
+
+            if(found_PGM != string::npos){
+                _headerBEI.pgm = getPMGHeader(line);
+            }
+            // Finding Comments, meaning skip!
+            if (found_COM != string::npos){
+                continue;
+            }
+            // Finding Ionophseric Constants as per new format
+            if (found_IONO != string::npos) {
+                size_t found_DBSA = line.find(sTokenBDSA);
+                size_t found_DBSB = line.find(sTokenBDSB);
+                if (found_DBSA != string::npos) {
+                    _headerBEI.ialpha = headerHelperGPS(line);
+                }
+                if (found_DBSB != string::npos) {
+                    _headerBEI.ibeta = headerHelperGPS(line);
+                }
+                continue;
+            }
+            // Finding GPS to UTC Time Correction
+            if (found_CORR != string::npos) {
+                size_t found_BDUT = line.find(sTokenBDUT);
+                if (found_BDUT != string::npos)
+                    _headerBEI.BDUT = headerHelperGPS(line);
+                continue;
+            }
+            if (found_LEAP != string::npos) {
+                line = line.substr(0, 7);
+                _headerBEI.leapSec = stod(line);
+                continue;
+            }
+            // Finding End of Header Info
+            if (found_END != string::npos) {
+                break;
+            }
+        }
+
+        break;
+    }
+    case SatelliteSystem::Mixed:{
+        //iono
+        const string sTokenGPSA = "GPSA";//= GPS alpha0 - alpha3
+        const string sTokenGPSB = "GPSB";//GPS beta0 - beta3
+        //time sys core
+        const string sTokenGPUT = "GPUT";//= GPS - UTC (a0, a1)
+
+        //iono
+        const string sTokenGAL = "GAL";//Galileo ai0 - ai2s
+        //time sys core
+        const string sTokenGAUT = "GAUT";//= GAL - UTC ( a0, a1)
+
+        //time sys core
+        const string sTokenGLUT = "GLUT";//= GLO - UTC (a0= -TauC, a1=zero)
+        const string sTokenGLGP = "GLGP";//= GLO - GPS (a0=TauGPS, a1=zero)
+
+        //iono
+        const string sTokenBDSA = "BDSA";//BDS alpha0 - alpha3
+        const string sTokenBDSB = "BDSB";//= BDS beta0 - beta3
+        //time sys cores
+        const string sTokenBDUT = "GDUT";// =BDS - UTC (a0=A0UTC, a1=A1UTC )
+        while (!infile.eof()) {
+            line.clear();
+
+            getline(infile, line, '\n');
+
+            size_t found_PGM = line.find(sTokenPGM);
+            size_t found_COM = line.find(sTokenCOM);
+            size_t found_IONO = line.find(sTokenIONO);
+            size_t found_CORR = line.find(sTokenCORR);
+            size_t found_LEAP = line.find(sTokenLEAP);
+            size_t found_END = line.find(sTokenEND);
+
+            if(found_PGM != string::npos){
+                _headerBEI.pgm = getPMGHeader(line);
+                _headerGPS.pgm = getPMGHeader(line);
+                _headerGAL.pgm = getPMGHeader(line);
+                _headerGLO.pgm = getPMGHeader(line);
+            }
+            // Finding Comments, meaning skip!
+            if (found_COM != string::npos){
+                continue;
+            }
+            // Finding Ionophseric Constants as per new format
+            if (found_IONO != string::npos) {
+                size_t found_DBSA = line.find(sTokenBDSA);
+                size_t found_DBSB = line.find(sTokenBDSB);
+                size_t found_GAL = line.find(sTokenGAL);
+                size_t found_GPSA = line.find(sTokenGPSA);
+                size_t found_GPSB = line.find(sTokenGPSB);
+
+                if (found_GPSA != string::npos) {
+                    _headerGPS.ialpha = headerHelperGPS(line);
+                    continue;
+                }
+                if (found_GPSB != string::npos) {
+                    _headerGPS.ibeta = headerHelperGPS(line);
+                    continue;
+                }
+                if (found_GAL != string::npos) {
+                    _headerGAL.gal = headerHelperGPS(line);
+                    continue;
+                }
+                if (found_DBSA != string::npos) {
+                    _headerBEI.ialpha = headerHelperGPS(line);
+                    continue;
+                }
+                if (found_DBSB != string::npos) {
+                    _headerBEI.ibeta = headerHelperGPS(line);
+                    continue;
+                }
+            }
+            // Finding GPS to UTC Time Correction
+            if (found_CORR != string::npos) {
+                size_t found_BDUT = line.find(sTokenBDUT);
+                size_t found_GLUT = line.find(sTokenGLUT);
+                size_t found_GAUT = line.find(sTokenGAUT);
+                size_t found_GPUT = line.find(sTokenGPUT);
+                if (found_GPUT != string::npos)
+                    _headerGPS.GPUT = headerHelperGPS(line);
+                if (found_GAUT != string::npos)
+                    _headerGAL.GAUT = headerHelperGPS(line);
+                if (found_BDUT != string::npos)
+                    _headerBEI.BDUT = headerHelperGPS(line);
+                if (found_GLUT != string::npos)
+                    _headerGLO.GLUT = headerHelperGPS(line);
+                continue;
+            }
+            if (found_LEAP != string::npos) {
+                line = line.substr(0, 7);
+                _headerBEI.leapSec = stod(line);
+                _headerGPS.leapSec = stod(line);
+                _headerGLO.leapSec = stod(line);
+                _headerGAL.leapSec = stod(line);
+                continue;
+            }
+            // Finding End of Header Info
+            if (found_END != string::npos) {
+                break;
+            }
+        }
+        break;
+    }
+    default: break;
+    }
+}
+
+
+std::vector<string> Rinex3Nav::getPMGHeader(std::string line)
+{
+    line = line.substr(0, 60);
+    string word;
+    vector<string> data;
+    for (unsigned i = 0; i < line.length(); i += 20) {
+        word = line.substr(i, 20);
+        if (word.find_first_not_of(' ') == std::string::npos)
+            continue;
+        word = regex_replace(word,regex{R"(^\s+|\s+$)"}, "");
+        data.push_back(word);
+        word.clear();
+    }
+    return data;
+}
 
 //==================================GPS==================================================
 // Navigation Body Organizer for GPS Navigation File
@@ -176,68 +528,13 @@ Rinex3Nav::DataGPS epochNavOrganizerGPS(vector<string> block) {
 
 // Reader for GPS navigation file
 void Rinex3Nav::readGPS(std::ifstream& infile) {
-    // String tokens to look for
-    const string sTokenIALPHA = "ION ALPHA";
-    const string sTokenIBETA = "ION BETA";
-    const string sTokenIONO = "IONOSPHERIC CORR";
-    const string sTokenGPSA = "GPSA";
-    const string sTokenGPSB = "GPSB";
-    const string sTokenLEAP = "LEAP SECONDS";
-    const string sTokenCORR = "TIME SYSTEM CORR";
-    const string sTokenEND = "END OF HEADER";
-    const string sTokenCOM = "COMMENT";
     // A vector to hold block of sentences
     vector<string> block;
     // To hold contents of a line from input file
     string line;
     int nlines = 0;
 
-    // Reading Header
-    while (!infile.eof()) {
-        line.clear();
-        // Temporarily store line from input file
-        getline(infile, line, '\n');
-        // Looking for keywords in Header Part...
-        size_t found_ALPHA = line.find(sTokenIALPHA);
-        size_t found_BETA = line.find(sTokenIBETA);
-        size_t found_IONO = line.find(sTokenIONO);
-        size_t found_END = line.find(sTokenEND);
-        size_t found_CORR = line.find(sTokenCORR);
-        size_t found_COM = line.find(sTokenCOM);
-        size_t found_LEAP = line.find(sTokenLEAP);
-
-        // Finding Comments, meaning skip!
-        if (found_COM != string::npos) {
-            continue;
-        }
-        // Finding Ionophseric Constants as per new format
-        if (found_IONO != string::npos) {
-            size_t found_GPSA = line.find(sTokenGPSA);
-            size_t found_GPSB = line.find(sTokenGPSB);
-            if (found_GPSA != string::npos) {
-                _headerGPS.ialpha = headerHelperGPS(line);
-            }
-            if (found_GPSB != string::npos) {
-                _headerGPS.ibeta = headerHelperGPS(line);
-            }
-            continue;
-        }
-        // Finding GPS to UTC Time Correction
-        if (found_CORR != string::npos) {
-            size_t found_GPUT = line.find("GPUT");
-            _headerGPS.GPUT = headerHelperGPS(line);
-            continue;
-        }
-        if (found_LEAP != string::npos) {
-            line = line.substr(0, 7);
-            _headerGPS.leapSec = stod(line);
-            continue;
-        }
-        // Finding End of Header Info
-        if (found_END != string::npos) {
-            break;
-        }
-    }
+    readHead(infile, SatelliteSystem::GPS);
 
     // Create GPS Navigation data holder
     map<int, vector<Rinex3Nav::DataGPS>> mapGPS;
@@ -324,53 +621,13 @@ Rinex3Nav::DataGLO epochNavOrganizerGLO(vector<string> block) {
 // Reader for Glonass navigation file
 // Parameters are in ECEF Greenwich coordinate system PZ - 90
 void Rinex3Nav::readGLO(std::ifstream& infile) {
-    // String tokens to look
-    const string sTokenCORR = "CORR TO SYSTEM TIME";
-    const string sTokenLEAP = "LEAP SECONDS";
-    const string sTokenEND = "END OF HEADER";
-    const string sTokenCOM = "COMMENT";
-    // A vector to hold block of sentences
+
     vector<string> block;
-    // To hold contents of a line from input file
+
     string line;
     int nlines = 0;
 
-    // Reading Header
-    while (!infile.eof()) {
-        line.clear();
-        // Temporarily store line from input file
-        getline(infile, line, '\n');
-        // Looking for keywords in Header Part...
-        size_t found_LEAP = line.find(sTokenLEAP);
-        size_t found_END = line.find(sTokenEND);
-        size_t found_CORR = line.find(sTokenCORR);
-        size_t found_COM = line.find(sTokenCOM);
-
-        // Finding Comments, meaning skip!
-        if (found_COM != string::npos) {
-            continue;
-        }
-        // Finding Time Correction
-        if (found_CORR != string::npos) {
-            line = line.substr(0, 60);
-            // Splitting words in the line
-            istringstream iss(line);
-            vector<string> dataS{ istream_iterator<string>{iss}, istream_iterator<string>{} };
-            for (string &s : dataS) { _headerGLO.TimeCorr.push_back(stod(s)); }
-            dataS.clear();
-            continue;
-        }
-        // Finding Leap Second
-        if (found_LEAP != string::npos) {
-            line = line.substr(0, 7);
-            _headerGLO.leapSec = stod(line);
-            continue;
-        }
-        // Finding End of Header Info
-        if (found_END != string::npos) {
-            break;
-        }
-    }
+    readHead(infile, SatelliteSystem::Glonass);
 
     // Create GLO Navigation data holder
     map<int, vector<Rinex3Nav::DataGLO>> mapGLO;
@@ -480,41 +737,14 @@ Rinex3Nav::DataGAL epochNavOrganizerGAL(vector<string> block) {
 
 // Reader for Galileo navigation file
 void Rinex3Nav::readGAL(std::ifstream& infile) {
-    // String tokens to look
-    const string sTokenLEAP = "LEAP SECONDS";
-    const string sTokenEND = "END OF HEADER";
-    const string sTokenCOM = "COMMENT";
     // A vector to hold block of sentences
     vector<string> block;
     // To hold contents of a line from input file
     string line;
     int nlines = 0;
 
-    // Reading Header
-    while (!infile.eof()) {
-        line.clear();
-        // Temporarily store line from input file
-        getline(infile, line, '\n');
-        // Looking for keywords in Header Part...
-        size_t found_LEAP = line.find(sTokenLEAP);
-        size_t found_END = line.find(sTokenEND);
-        size_t found_COM = line.find(sTokenCOM);
+    readHead(infile, SatelliteSystem::Galileo);
 
-        // Finding Comments, meaning skip!
-        if (found_COM != string::npos) {
-            continue;
-        }
-        // Finding Leap Second
-        else if (found_LEAP != string::npos) {
-            line = line.substr(0, 7);
-            _headerGLO.leapSec = stod(line);
-            continue;
-        }
-        // Finding End of Header Info
-        else if (found_END != string::npos) {
-            break;
-        }
-    }
 
     // Create GAL Navigation data holder
     map<int, vector<Rinex3Nav::DataGAL>> mapGAL;
@@ -623,55 +853,15 @@ Rinex3Nav::DataBEI epochNavOrganizerBEI(vector<string> block) {
 
 void Rinex3Nav::readBEI(std::ifstream& infile)
 {
-    // String tokens to look
-    const string sTokenCORR = "CORR TO SYSTEM TIME";
-    const string sTokenLEAP = "LEAP SECONDS";
-    const string sTokenEND = "END OF HEADER";
-    const string sTokenCOM = "COMMENT";
     // A vector to hold block of sentences
     vector<string> block;
     // To hold contents of a line from input file
     string line;
     int nlines = 0;
 
-    // Reading Header
-    while (!infile.eof()) {
-        line.clear();
-        // Temporarily store line from input file
-        getline(infile, line, '\n');
-        // Looking for keywords in Header Part...
-        size_t found_LEAP = line.find(sTokenLEAP);
-        size_t found_END = line.find(sTokenEND);
-        size_t found_CORR = line.find(sTokenCORR);
-        size_t found_COM = line.find(sTokenCOM);
+    readHead(infile, SatelliteSystem::BeiDou);
 
-        // Finding Comments, meaning skip!
-        if (found_COM != string::npos) {
-            continue;
-        }
-        // Finding Time Correction
-        if (found_CORR != string::npos) {
-            line = line.substr(0, 60);
-            // Splitting words in the line
-            istringstream iss(line);
-            vector<string> dataS{ istream_iterator<string>{iss}, istream_iterator<string>{} };
-            for (string &s : dataS) { _headerBEI.TimeCorr.push_back(stod(s)); }
-            dataS.clear();
-            continue;
-        }
-        // Finding Leap Second
-        if (found_LEAP != string::npos) {
-            line = line.substr(0, 7);
-            _headerBEI.leapSec = stod(line);
-            continue;
-        }
-        // Finding End of Header Info
-        if (found_END != string::npos) {
-            break;
-        }
-    }
-
-    // Create GLO Navigation data holder
+    // Create BEI Navigation data holder
     map<int, vector<Rinex3Nav::DataBEI>> mapBEI;
 
     // Reading Navigation Data Body
@@ -692,7 +882,7 @@ void Rinex3Nav::readBEI(std::ifstream& infile)
             block.clear(); nlines = 0;
             // Add organized data to data holder
             // Save to Map: if PRN exists in map, then add NavInfo to vector of structs
-            // Else add new PRN as key and GLO data structure as Value
+            // Else add new PRN as key and BEI data structure as Value
             if (mapBEI.find(BEI.PRN) == mapBEI.end()) {
                 // not found, therefore insert PRN and corresponding value
                 vector<DataBEI> mapNavVector;
@@ -709,70 +899,15 @@ void Rinex3Nav::readBEI(std::ifstream& infile)
 }
 //=======================================================================================
 
+
 // Reader for GPS navigation file
 void Rinex3Nav::readMixed(std::ifstream& infile) {
-    // String tokens to look for
-    const string sTokenIALPHA = "ION ALPHA";
-    const string sTokenIBETA = "ION BETA";
-    const string sTokenIONO = "IONOSPHERIC CORR";
-    const string sTokenGPSA = "GPSA";
-    const string sTokenGPSB = "GPSB";
-    const string sTokenLEAP = "LEAP SECONDS";
-    const string sTokenCORR = "TIME SYSTEM CORR";
-    const string sTokenEND = "END OF HEADER";
-    const string sTokenCOM = "COMMENT";
-    // A vector to hold block of sentences
     vector<string> block;
-    // To hold contents of a line from input file
+
     string line;
     int nlines = 0;
 
-    // Reading Header
-    while (!infile.eof()) {
-        line.clear();
-        // Temporarily store line from input file
-        getline(infile, line, '\n');
-        // Looking for keywords in Header Part...
-        size_t found_ALPHA = line.find(sTokenIALPHA);
-        size_t found_BETA = line.find(sTokenIBETA);
-        size_t found_IONO = line.find(sTokenIONO);
-        size_t found_END = line.find(sTokenEND);
-        size_t found_CORR = line.find(sTokenCORR);
-        size_t found_COM = line.find(sTokenCOM);
-        size_t found_LEAP = line.find(sTokenLEAP);
-
-        // Finding Comments, meaning skip!
-        if (found_COM != string::npos) {
-            continue;
-        }
-        // Finding Ionophseric Constants as per new format
-        if (found_IONO != string::npos) {
-            size_t found_GPSA = line.find(sTokenGPSA);
-            size_t found_GPSB = line.find(sTokenGPSB);
-            if (found_GPSA != string::npos) {
-                _headerGPS.ialpha = headerHelperGPS(line);
-            }
-            if (found_GPSB != string::npos) {
-                _headerGPS.ibeta = headerHelperGPS(line);
-            }
-            continue;
-        }
-        // Finding GPS to UTC Time Correction
-        if (found_CORR != string::npos) {
-            size_t found_GPUT = line.find("GPUT");
-            _headerGPS.GPUT = headerHelperGPS(line);
-            continue;
-        }
-        if (found_LEAP != string::npos) {
-            line = line.substr(0, 7);
-            _headerBEI.leapSec = stod(line);
-            continue;
-        }
-        // Finding End of Header Info
-        if (found_END != string::npos) {
-            break;
-        }
-    }
+    readHead(infile, SatelliteSystem::Mixed);
 
     // Create GPS Navigation data holder
     map<int, vector<Rinex3Nav::DataGPS>> mapGPS;
@@ -954,14 +1089,10 @@ void Rinex3Nav::readMixed(std::ifstream& infile) {
 
 void Rinex3Nav::clear()
 {
-    _headerGAL.leapSec = NULL;
-    _headerGLO.TimeCorr.clear();
-    _headerGLO.leapSec = NULL;
-    _headerGPS.GPUT.clear();
-    _headerGPS.ialpha.clear();
-    _headerGPS.ibeta.clear();
-    _headerBEI.TimeCorr.clear();
-    _headerBEI.leapSec = NULL;
+    _headerGAL.clear();
+    _headerGLO.clear();
+    _headerGPS.clear();
+    _headerBEI.clear();
 
     _navGAL.clear();
     _navGLO.clear();
@@ -969,7 +1100,126 @@ void Rinex3Nav::clear()
     _navBEI.clear();
 }
 
+template<typename T>
+void Rinex3Nav::readBody(map<int, vector<T> > &mapData, ifstream& infile, SatelliteSystem sys)
+{
+    vector<string> block;
+    string line;
+    int nlines = 0;
+    int size = (sys == SatelliteSystem::Glonass ? 4 : 8);
+    // Reading Navigation Data Body
+    while (!infile.eof()) {
+        line.clear();
+        // Temporarily store line from input file
+        getline(infile, line, '\n'); nlines++;
+        if (line.find_first_not_of(' ') == std::string::npos) { continue; }
+        // Adjust line spaces before adding to block
+        if (nlines != 1) {
+            line = line.substr(4, line.length());
+        }
+        block.push_back(line);
+        // New block of navigation message
+        if (nlines == size) {
+            // Now we must process the block of lines
+            T data;
+            switch (sys) {
+            case SatelliteSystem::GPS:{
+                data = epochNavOrganizerGPS(block);
+                break;
+            }
+            case SatelliteSystem::Galileo:{
+                data = epochNavOrganizerGAL(block);
+                break;
+            }
+            case SatelliteSystem::Glonass:{
+                data = epochNavOrganizerGLO(block);
+                break;
+            }
+            case SatelliteSystem::BeiDou:{
+                data = epochNavOrganizerBEI(block);
+                break;
+            }
+            case SatelliteSystem::Mixed:{
 
+                break;
+            }
+            default:
+                break;
+            }
+
+            block.clear();
+            nlines = 0;
+            // Add organized data to data holder
+            // Save to Map: if PRN exists in map, then add NavInfo to vector of structs
+            // Else add new PRN as key and GPS data structure as Value
+
+            if (mapData.find(data.PRN) == mapData.end()) {
+                // not found, therefore insert PRN and corresponding value
+                vector<T> mapNavVector;
+                mapNavVector.push_back(data);
+                mapData.insert(pair<int, vector<T>>(data.PRN, mapNavVector));
+            }
+            else {
+                // found, therefore add to existing PRN
+                mapData[data.PRN].push_back(data);
+            }
+        }
+    }
+}
+
+
+
+//===================================Structs============================================
+Rinex3Nav::DataGPS::DataGPS(){}
+
+Rinex3Nav::DataGPS &Rinex3Nav::DataGPS::operator=(DataGPS &&other)
+{
+    if (this != &other){
+        this->isAvailable = other.isAvailable;
+        this->PRN = other.PRN;
+        this->epochInfo = other.epochInfo;
+        this->gpsTime = other.gpsTime;
+        this->clockBias = other.clockBias;
+        this->clockDrift = other.clockDrift;
+        this->clockDriftRate = other.clockDriftRate;
+
+        this->IODE = other.IODE;
+        this->Crs = other.Crs;
+        this->Delta_n = other.Delta_n;
+        this->M0 = other.M0;
+
+        this->Cuc = other.Cuc;
+        this->Eccentricity = other.Eccentricity;
+        this->Cus = other.Cus;
+        this->Sqrt_a = other.Sqrt_a;
+
+        this->TOE = other.TOE;
+        this->Cic = other.Cic;
+        this->OMEGA0 = other.OMEGA0;
+        this->Cis = other.Cis;
+
+        this->i0 = other.i0;
+        this->Crc = other.Crc;
+        this->omega = other.omega;
+        this->OMEGA_DOT = other.OMEGA_DOT;
+
+        this->IDOT = other.IDOT;
+        this->L2_codes_channel = other.L2_codes_channel;
+        this->GPS_week = other.GPS_week;
+        this->L2_P_data_flag = other.L2_P_data_flag;
+
+        this->svAccuracy = other.svAccuracy;
+        this->svHealth = other.svHealth;
+        this->TGD = other.TGD;
+        this->IODC = other.IODC;
+
+        this->transmission_time = other.transmission_time;
+        this->fit_interval = other.fit_interval;
+        this->spare1 = other.spare1;
+        this->spare2 = other.spare2;
+    }
+    return *this;
+}
 
 std::vector<std::optional<double>> Rinex3Nav::DataGPS::toVec()
 {
@@ -1016,6 +1266,37 @@ std::vector<std::optional<double>> Rinex3Nav::DataGPS::toVec()
     return vecData;
 }
 
+Rinex3Nav::DataGLO::DataGLO(){}
+
+Rinex3Nav::DataGLO &Rinex3Nav::DataGLO::operator=(DataGLO &&other)
+{
+    if (this != &other){
+        this->isAvailable = other.isAvailable;
+        this->PRN = other.PRN;
+        this->epochInfo = other.epochInfo;
+        this->gpsTime = other.gpsTime;
+        this->clockBias = other.clockBias;
+        this->relFreqBias = other.relFreqBias;
+        this->messageFrameTime = other.messageFrameTime;
+
+        this->satPosX = other.satPosX;
+        this->satVelX = other.satVelX;
+        this->satAccX = other.satAccX;
+        this->satHealth = other.satHealth;
+
+        this->satPosY = other.satPosY;
+        this->satVelY = other.satVelY;
+        this->satAccY = other.satAccY;
+        this->freqNum = other.freqNum;
+
+        this->satPosZ = other.satPosZ;
+        this->satVelZ = other.satVelZ;
+        this->satAccZ = other.satAccZ;
+        this->infoAge = other.infoAge;
+    }
+    return *this;
+}
+
 std::vector<std::optional<double>> Rinex3Nav::DataGLO::toVec()
 {
     std::vector<std::optional<double>> vecData;
@@ -1039,6 +1320,13 @@ std::vector<std::optional<double>> Rinex3Nav::DataGLO::toVec()
     vecData.push_back(infoAge);
 
     return vecData;
+}
+
+Rinex3Nav::DataGAL::DataGAL(){}
+
+Rinex3Nav::DataGAL &Rinex3Nav::DataGAL::operator=(DataGAL &&other)
+{
+
 }
 
 std::vector<std::optional<double>> Rinex3Nav::DataGAL::toVec()
@@ -1087,6 +1375,13 @@ std::vector<std::optional<double>> Rinex3Nav::DataGAL::toVec()
     return vecData;
 }
 
+Rinex3Nav::DataBEI::DataBEI(){}
+
+Rinex3Nav::DataBEI &Rinex3Nav::DataBEI::operator=(DataBEI &&other)
+{
+
+}
+
 std::vector<std::optional<double>> Rinex3Nav::DataBEI::toVec()
 {
     std::vector<std::optional<double>> vecData;
@@ -1132,8 +1427,9 @@ std::vector<std::optional<double>> Rinex3Nav::DataBEI::toVec()
 
     return vecData;
 }
+//======================================================================================
 
-
+//======================================================================================
 ViewNav::ViewNav(){}
 
 ViewNav &ViewNav::operator=(const Rinex3Nav &other)
@@ -1162,3 +1458,40 @@ ViewNav::ViewNav(const Rinex3Nav &other)
     this->_navGAL = other._navGAL;
     this->_navBEI = other._navBEI;
 }
+//======================================================================================
+
+
+//======================================================================================
+void Rinex3Nav::HeaderGPS::clear()
+{
+    GPUT.clear();
+    ialpha.clear();
+    ibeta.clear();
+    leapSec = 0;
+    pgm.clear();
+}
+
+void Rinex3Nav::HeaderGLO::clear()
+{
+    GLUT.clear();
+    leapSec = 0;
+    pgm.clear();
+}
+
+void Rinex3Nav::HeaderGAL::clear()
+{
+    GAUT.clear();
+    gal.clear();
+    pgm.clear();
+    leapSec = 0;
+}
+
+void Rinex3Nav::HeaderBEI::clear()
+{
+    BDUT.clear();
+    leapSec = 0;
+    ialpha.clear();
+    ibeta.clear();
+    pgm.clear();
+}
+//======================================================================================

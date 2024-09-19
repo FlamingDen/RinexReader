@@ -1,5 +1,5 @@
 #include "rinexreader.h"
-#include<enumtypes.h>
+#include "csvcreator.h"
 
 
 RinexReader::RinexReader()
@@ -143,7 +143,6 @@ void RinexReader::nextNav()
         init(paths_nav.at(nav_counter),RinexType::NAVIGATION);
     if(checkVersion(RinexType::NAVIGATION) || !fin_nav.is_open()){
         readNav(nav_counter);
-        //nav.readMixed(fin_nav);
         fin_nav.close();
         nav_counter++;
     }
@@ -214,7 +213,8 @@ void RinexReader::clearObs()
 
 void RinexReader::clearRRNav()
 {
-    nav.clear();
+    clearNavData();
+
     rinex_type_nav = 0;
     rinex_version_nav = -1;
     paths_nav.clear();

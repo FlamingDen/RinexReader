@@ -309,7 +309,7 @@ bool Rinex3Obs::obsEpoch(ifstream& infile) {
 // To clear contents in observation data structure
 void Rinex3Obs::clear(Rinex3Obs::ObsEpochInfo& obs) {
     obs.clear();
-    obs.gpsTime = NULL;
+    obs.gpsTime = 0;
 }
 
 // To clear contents in observation data structure

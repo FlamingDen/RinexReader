@@ -3,6 +3,7 @@
 #include "timeutils.h"
 #include "stringutils.h"
 #include <optional>
+#include "enumtypes.h"
 
 #ifndef RINEX3NAV_H_
 #define RINEX3NAV_H_
@@ -17,6 +18,12 @@ public:
     // Data Structures
     //GPS
     struct DataGPS {
+        DataGPS();
+        DataGPS(const DataGPS &) = default;
+        DataGPS(DataGPS &&) = default;
+        DataGPS &operator=(const DataGPS &) = delete;
+        DataGPS &operator=(DataGPS &&other);
+
         bool isAvailable;
         const int SatelliteSystem = 1;
 
@@ -74,6 +81,12 @@ public:
     };
     //Glonass
     struct DataGLO {
+        DataGLO();
+        DataGLO(const DataGLO &) = default;
+        DataGLO(DataGLO &&) = default;
+        DataGLO &operator=(const DataGLO &) = delete;
+        DataGLO &operator=(DataGLO &&other);
+
         bool isAvailable;
         const int SatelliteSystem = 3;
 
@@ -107,6 +120,12 @@ public:
     };
     //Galileo
     struct DataGAL {
+        DataGAL();
+        DataGAL(const DataGAL &) = default;
+        DataGAL(DataGAL &&) = default;
+        DataGAL &operator=(const DataGAL &) = delete;
+        DataGAL &operator=(DataGAL &&other);
+
         bool isAvailable;
         const int SatelliteSystem = 2;
 
@@ -159,12 +178,18 @@ public:
         std::optional<double> spare2;
         std::optional<double> spare3;
         std::optional<double> spare4;
-        //also have 3 spare places
+        // also have 3 spare places
 
         std::vector<std::optional<double>> toVec();
     };
     //BeiDou
     struct DataBEI {
+        DataBEI();
+        DataBEI(const DataBEI &) = default;
+        DataBEI(DataBEI &&) = default;
+        DataBEI &operator=(const DataBEI &) = delete;
+        DataBEI &operator=(DataBEI &&other);
+
         bool isAvailable;
         const int SatelliteSystem = 4;
 
@@ -223,44 +248,68 @@ public:
 
     // Headers
     struct HeaderGPS {
+        double leapSec;
+        std::vector<std::string> pgm;
+
         // Ionospheric alpha and beta constants
         std::vector<double> ialpha;
         std::vector<double> ibeta;
+
         // Time System correction
         std::vector<double> GPUT;
-        double leapSec;
+
+        void clear();
     };
 
     struct HeaderGLO {
-        // Time System correction
-        std::vector<double> TimeCorr;
         double leapSec;
+        std::vector<std::string> pgm;
+
+        // Time System correction
+        std::vector<double> GLUT;
+
+        void clear();
     };
 
     struct HeaderGAL {
-        // Time System correction
         double leapSec;
+        std::vector<std::string> pgm;
+
+        // Ionospheric constants
+        std::vector<double> gal;
+
+        // Time System correction
+        std::vector<double> GAUT;
+
+        void clear();
     };
 
     struct HeaderBEI {
-        // Time System correction
-        std::vector<double> TimeCorr;
         double leapSec;
+        std::vector<std::string> pgm;
+
+        // Ionospheric alpha and beta constants
+        std::vector<double> ialpha;
+        std::vector<double> ibeta;
+
+        // Time System correction
+        std::vector<double> BDUT;
+
+        void clear();
     };
 
     // Attributes
-    // * Navigation data structure mapped to PRN for ease of use
-    std::map<int, std::vector<Rinex3Nav::DataGPS>> _navGPS;
-    std::map<int, std::vector<Rinex3Nav::DataGLO>> _navGLO;
-    std::map<int, std::vector<Rinex3Nav::DataGAL>> _navGAL;
-    std::map<int, std::vector<Rinex3Nav::DataBEI>> _navBEI;
-
     // * Header information
     HeaderGPS _headerGPS;
     HeaderGLO _headerGLO;
     HeaderGAL _headerGAL;
     HeaderBEI _headerBEI;
 
+    // * Navigation data structure mapped to PRN for ease of use
+    std::map<int, std::vector<Rinex3Nav::DataGPS>> _navGPS;
+    std::map<int, std::vector<Rinex3Nav::DataGLO>> _navGLO;
+    std::map<int, std::vector<Rinex3Nav::DataGAL>> _navGAL;
+    std::map<int, std::vector<Rinex3Nav::DataBEI>> _navBEI;
 
     // Functions
     void readGPS(std::ifstream& infile); // for separate GPS only navigation files
@@ -274,6 +323,13 @@ public:
     int EpochMatcher(double obsTime, std::vector<Rinex3Nav::DataBEI> NAV);
 
     void clear();
+
+private:
+    void readHead(std::ifstream& infile, SatelliteSystem sys);
+    std::vector<std::string> getPMGHeader(std::string line);
+
+    template<typename T>
+    void readBody(std::map<int, std::vector<T>>& mapData, std::ifstream& infile, SatelliteSystem sys);
 };
 
 struct ViewNav

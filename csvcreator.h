@@ -5,9 +5,6 @@
 #include <QList>
 #include <rinex3nav.h>
 #include <rinex3obs.h>
-#include"enumtypes.h"
-
-class RinexReader;
 
 class CSVCreator
 {

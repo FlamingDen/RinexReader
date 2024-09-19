@@ -36,12 +36,12 @@ public:
         std::map<std::string, std::map<int, std::vector<double>>> observations;
         void clear() {
             epochRecord.clear();
-            numSatsGAL = NULL;
-            numSatsGLO = NULL;
-            numSatsGPS = NULL;
-            numSatsBEI = NULL;
+            numSatsGAL = 0;
+            numSatsGLO = 0;
+            numSatsGPS = 0;
+            numSatsBEI = 0;
             observations.clear();
-            recClockOffset = NULL;
+            recClockOffset = 0;
         }
     };
 
