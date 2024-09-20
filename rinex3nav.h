@@ -18,12 +18,6 @@ public:
     // Data Structures
     //GPS
     struct DataGPS {
-        DataGPS();
-        DataGPS(const DataGPS &) = default;
-        DataGPS(DataGPS &&) = default;
-        DataGPS &operator=(const DataGPS &) = delete;
-        DataGPS &operator=(DataGPS &&other);
-
         bool isAvailable;
         const int SatelliteSystem = 1;
 
@@ -81,12 +75,6 @@ public:
     };
     //Glonass
     struct DataGLO {
-        DataGLO();
-        DataGLO(const DataGLO &) = default;
-        DataGLO(DataGLO &&) = default;
-        DataGLO &operator=(const DataGLO &) = delete;
-        DataGLO &operator=(DataGLO &&other);
-
         bool isAvailable;
         const int SatelliteSystem = 3;
 
@@ -120,12 +108,6 @@ public:
     };
     //Galileo
     struct DataGAL {
-        DataGAL();
-        DataGAL(const DataGAL &) = default;
-        DataGAL(DataGAL &&) = default;
-        DataGAL &operator=(const DataGAL &) = delete;
-        DataGAL &operator=(DataGAL &&other);
-
         bool isAvailable;
         const int SatelliteSystem = 2;
 
@@ -184,12 +166,6 @@ public:
     };
     //BeiDou
     struct DataBEI {
-        DataBEI();
-        DataBEI(const DataBEI &) = default;
-        DataBEI(DataBEI &&) = default;
-        DataBEI &operator=(const DataBEI &) = delete;
-        DataBEI &operator=(DataBEI &&other);
-
         bool isAvailable;
         const int SatelliteSystem = 4;
 
@@ -328,8 +304,8 @@ private:
     void readHead(std::ifstream& infile, SatelliteSystem sys);
     std::vector<std::string> getPMGHeader(std::string line);
 
-    template<typename T>
-    void readBody(std::map<int, std::vector<T>>& mapData, std::ifstream& infile, SatelliteSystem sys);
+    void readBody(std::ifstream& infile, SatelliteSystem sys);
+    void saveBlock(std::vector<std::string>& block, SatelliteSystem sys, std::string ID = "");
 };
 
 struct ViewNav
@@ -339,17 +315,17 @@ struct ViewNav
     ViewNav &operator=(const Rinex3Nav &other);
 
     // Attributes
-    // * Navigation data structure mapped to PRN for ease of use
-    std::map<int, std::vector<Rinex3Nav::DataGPS>> _navGPS;
-    std::map<int, std::vector<Rinex3Nav::DataGLO>> _navGLO;
-    std::map<int, std::vector<Rinex3Nav::DataGAL>> _navGAL;
-    std::map<int, std::vector<Rinex3Nav::DataBEI>> _navBEI;
-
     // * Header information
     Rinex3Nav::HeaderGPS _headerGPS;
     Rinex3Nav::HeaderGLO _headerGLO;
     Rinex3Nav::HeaderGAL _headerGAL;
     Rinex3Nav::HeaderBEI _headerBEI;
+
+    // * Navigation data structure mapped to PRN for ease of use
+    std::map<int, std::vector<Rinex3Nav::DataGPS>> _navGPS;
+    std::map<int, std::vector<Rinex3Nav::DataGLO>> _navGLO;
+    std::map<int, std::vector<Rinex3Nav::DataGAL>> _navGAL;
+    std::map<int, std::vector<Rinex3Nav::DataBEI>> _navBEI;
 };
 
 #endif /* RINEX3NAV_H_ */

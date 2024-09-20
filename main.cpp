@@ -41,10 +41,10 @@ int main(int argc, char *argv[])
     rr.nextNav();
     viewNav= rr.getNav();
     rr.nextNav();
-    viewNav= rr.getNav();
+    viewNav = rr.getNav();
     rr.clearNavData();
     rr.nextNav();
-    viewNav= rr.getNav();
+    viewNav = rr.getNav();
 
     //rr.saveAsCSV(pathCSVobs, RinexType::OBSERVATION);
     //rr.saveAsCSV(pathCSVnav, RinexType::NAVIGATION);
@@ -199,7 +199,7 @@ void testFacadeDB(){
         out << ite.key().toString() << endl;
         for(it = ite.value().begin(); it != ite.value().end(); ++it){
             out << it.key() << " : ";
-            for(const double x : it.value())
+            for(const double& x : it.value())
                 out << x << ", ";
             out << endl;
         }

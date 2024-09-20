@@ -195,8 +195,10 @@ void RinexReader::readNav(int index)
 void RinexReader::clearObs()
 {
     epochs.clear();
+
     obs.clear(obs._Header);
     obs.clear(obs._EpochObs);
+
     obs._obsGAL.clear();
     obs._obsGLO.clear();
     obs._obsGPS.clear();
@@ -205,6 +207,7 @@ void RinexReader::clearObs()
     obs._obsTypesGLO.clear();
     obs._obsTypesGPS.clear();
     obs._obsTypesBEI.clear();
+
     rinex_type_obs = 0;
     rinex_version_obs = -1;
     path_obs = "";

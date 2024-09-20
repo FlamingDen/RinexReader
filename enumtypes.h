@@ -25,4 +25,6 @@ QString getSatelliteSystemShort(int s);
 
 QString getSatelliteSystemShort(SatelliteSystem s);
 
+SatelliteSystem getSatelliteSystem(QString sys);
+
 #endif // ENUMTYPES_H

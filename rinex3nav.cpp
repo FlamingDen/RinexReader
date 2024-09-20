@@ -68,7 +68,6 @@ vector<std::optional<double>> rinex3NavDataSplitter(string line) {
     return data;
 }
 
-
 //=======================================================================================
 template<typename T>
 int epochMatcherHelper(double obsTime, std::vector<T> NAV){
@@ -528,49 +527,11 @@ Rinex3Nav::DataGPS epochNavOrganizerGPS(vector<string> block) {
 
 // Reader for GPS navigation file
 void Rinex3Nav::readGPS(std::ifstream& infile) {
-    // A vector to hold block of sentences
-    vector<string> block;
-    // To hold contents of a line from input file
-    string line;
-    int nlines = 0;
-
+    _headerGPS.clear();
     readHead(infile, SatelliteSystem::GPS);
 
-    // Create GPS Navigation data holder
-    map<int, vector<Rinex3Nav::DataGPS>> mapGPS;
-
-    // Reading Navigation Data Body
-    while (!infile.eof()) {
-        line.clear();
-        // Temporarily store line from input file
-        getline(infile, line, '\n'); nlines++;
-        if (line.find_first_not_of(' ') == std::string::npos) { continue; }
-        // Adjust line spaces before adding to block
-        if (nlines != 1) {
-            line = line.substr(4, line.length());
-        }
-        block.push_back(line);
-        // New block of navigation message
-        if (nlines == 8) {
-            // Now we must process the block of lines
-            DataGPS GPS = epochNavOrganizerGPS(block);
-            block.clear(); nlines = 0;
-            // Add organized data to data holder
-            // Save to Map: if PRN exists in map, then add NavInfo to vector of structs
-            // Else add new PRN as key and GPS data structure as Value
-            if (mapGPS.find(GPS.PRN) == mapGPS.end()) {
-                // not found, therefore insert PRN and corresponding value
-                vector<DataGPS> mapNavVector; mapNavVector.push_back(GPS);
-                mapGPS.insert(pair<int, vector<DataGPS>>(GPS.PRN, mapNavVector));
-            }
-            else {
-                // found, therefore add to existing PRN
-                mapGPS[GPS.PRN].push_back(GPS);
-            }
-        }
-    }
-    // Update the attribute of Navigation Object
-    _navGPS = mapGPS;
+    _navGPS.clear();
+    readBody(infile, SatelliteSystem::GPS);
 }
 //=======================================================================================
 
@@ -621,49 +582,11 @@ Rinex3Nav::DataGLO epochNavOrganizerGLO(vector<string> block) {
 // Reader for Glonass navigation file
 // Parameters are in ECEF Greenwich coordinate system PZ - 90
 void Rinex3Nav::readGLO(std::ifstream& infile) {
-
-    vector<string> block;
-
-    string line;
-    int nlines = 0;
-
+    _headerGLO.clear();
     readHead(infile, SatelliteSystem::Glonass);
 
-    // Create GLO Navigation data holder
-    map<int, vector<Rinex3Nav::DataGLO>> mapGLO;
-
-    // Reading Navigation Data Body
-    while (!infile.eof()) {
-        line.clear();
-        // Temporarily store line from input file
-        getline(infile, line, '\n'); nlines++;
-        if (line.find_first_not_of(' ') == std::string::npos) { continue; }
-        // Adjust line spaces before adding to block
-        if (nlines != 1) {
-            line = line.substr(4, line.length());
-        }
-        block.push_back(line);
-        // New block of navigation message
-        if (nlines == 4) {
-            // Now we must process the block of lines
-            Rinex3Nav::DataGLO GLO = epochNavOrganizerGLO(block);
-            block.clear(); nlines = 0;
-            // Add organized data to data holder
-            // Save to Map: if PRN exists in map, then add NavInfo to vector of structs
-            // Else add new PRN as key and GLO data structure as Value
-            if (mapGLO.find(GLO.PRN) == mapGLO.end()) {
-                // not found, therefore insert PRN and corresponding value
-                vector<DataGLO> mapNavVector; mapNavVector.push_back(GLO);
-                mapGLO.insert(pair<int, vector<DataGLO>>(GLO.PRN, mapNavVector));
-            }
-            else {
-                // found, therefore add to existing PRN
-                mapGLO[GLO.PRN].push_back(GLO);
-            }
-        }
-    }
-    // Update the attribute of Navigation Object
-    _navGLO = mapGLO;
+    _navGLO.clear();
+    readBody(infile, SatelliteSystem::Glonass);
 }
 //=======================================================================================
 
@@ -737,49 +660,11 @@ Rinex3Nav::DataGAL epochNavOrganizerGAL(vector<string> block) {
 
 // Reader for Galileo navigation file
 void Rinex3Nav::readGAL(std::ifstream& infile) {
-    // A vector to hold block of sentences
-    vector<string> block;
-    // To hold contents of a line from input file
-    string line;
-    int nlines = 0;
-
+    _headerGAL.clear();
     readHead(infile, SatelliteSystem::Galileo);
 
-
-    // Create GAL Navigation data holder
-    map<int, vector<Rinex3Nav::DataGAL>> mapGAL;
-
-    // Reading Navigation Data Body
-    while (!infile.eof()) {
-        line.clear();
-        // Temporarily store line from input file
-        getline(infile, line, '\n'); nlines++;
-        if (line.find_first_not_of(' ') == std::string::npos) { continue; }
-        // Adjust line spaces before adding to block
-        if (nlines != 1) {
-            line = line.substr(4, line.length());
-        }
-        block.push_back(line);
-        // New block of navigation message
-        if (nlines == 8) {
-            // Now we must process the block of lines
-            Rinex3Nav::DataGAL GAL = epochNavOrganizerGAL(block);
-            block.clear(); nlines = 0;
-            // Add organized data to data holder
-            // Save to Map: if PRN exists in map, then add NavInfo to vector of structs
-            // Else add new PRN as key and GAL data structure as Value
-            if (mapGAL.find(GAL.PRN) == mapGAL.end()) {
-                // not found, therefore insert PRN and corresponding value
-                vector<DataGAL> mapNavVector; mapNavVector.push_back(GAL);
-                mapGAL.insert(pair<int, vector<DataGAL>>(GAL.PRN, mapNavVector));
-            }
-            else {
-                // found, therefore add to existing PRN
-                mapGAL[GAL.PRN].push_back(GAL);
-            }
-        }
-    }
-    _navGAL = mapGAL;
+    _navGAL.clear();
+    readBody(infile, SatelliteSystem::Galileo);
 }
 //=======================================================================================
 
@@ -853,238 +738,21 @@ Rinex3Nav::DataBEI epochNavOrganizerBEI(vector<string> block) {
 
 void Rinex3Nav::readBEI(std::ifstream& infile)
 {
-    // A vector to hold block of sentences
-    vector<string> block;
-    // To hold contents of a line from input file
-    string line;
-    int nlines = 0;
-
+    _headerBEI.clear();
     readHead(infile, SatelliteSystem::BeiDou);
 
-    // Create BEI Navigation data holder
-    map<int, vector<Rinex3Nav::DataBEI>> mapBEI;
-
-    // Reading Navigation Data Body
-    while (!infile.eof()) {
-        line.clear();
-        // Temporarily store line from input file
-        getline(infile, line, '\n'); nlines++;
-        if (line.find_first_not_of(' ') == std::string::npos) { continue; }
-        // Adjust line spaces before adding to block
-        if (nlines != 1) {
-            line = line.substr(4, line.length());
-        }
-        block.push_back(line);
-        // New block of navigation message
-        if (nlines == 8) {
-            // Now we must process the block of lines
-            Rinex3Nav::DataBEI BEI = epochNavOrganizerBEI(block);
-            block.clear(); nlines = 0;
-            // Add organized data to data holder
-            // Save to Map: if PRN exists in map, then add NavInfo to vector of structs
-            // Else add new PRN as key and BEI data structure as Value
-            if (mapBEI.find(BEI.PRN) == mapBEI.end()) {
-                // not found, therefore insert PRN and corresponding value
-                vector<DataBEI> mapNavVector;
-                mapNavVector.push_back(BEI);
-                mapBEI.insert(pair<int, vector<DataBEI>>(BEI.PRN, mapNavVector));
-            }
-            else {
-                // found, therefore add to existing PRN
-                mapBEI[BEI.PRN].push_back(BEI);
-            }
-        }
-    }
-    _navBEI = mapBEI;
+    _navBEI.clear();
+    readBody(infile, SatelliteSystem::BeiDou);
 }
 //=======================================================================================
 
-
 // Reader for GPS navigation file
 void Rinex3Nav::readMixed(std::ifstream& infile) {
-    vector<string> block;
-
-    string line;
-    int nlines = 0;
+    clear();
 
     readHead(infile, SatelliteSystem::Mixed);
-
-    // Create GPS Navigation data holder
-    map<int, vector<Rinex3Nav::DataGPS>> mapGPS;
-    map<int, vector<Rinex3Nav::DataGLO>> mapGLO;
-    map<int, vector<Rinex3Nav::DataGAL>> mapGAL;
-    map<int, vector<Rinex3Nav::DataBEI>> mapBEI;
-
-
-    // Reading Navigation Data Body
-    while (!(infile >> std::ws).eof()) {
-        // *** Deal with end of file error
-        if (infile.fail()) { break; }
-        // ***
-
-        // Temporarily store line from input file
-        line.clear();
-        getline(infile, line, '\n');
-
-        // Constellation identifier
-        string ID = line.substr(0, 1);
-
-        // GPS
-        if(ID.find('G') != std::string::npos) {
-            nlines = 0;
-            while ((!(infile >> std::ws).eof()) || (nlines <= 8)) {
-                // *** Deal with end of file error
-                if (infile.fail()) { break; }
-                // ***
-
-                if (line.find_first_not_of(' ') == string::npos) { continue; }
-                block.push_back(line); nlines++;
-
-                // New block of navigation message
-                if (nlines == 8) {
-                    // Now we must process the block of lines
-                    DataGPS GPS = epochNavOrganizerGPS(block);
-                    block.clear(); line.clear();
-                    // Add organized data to data holder
-                    // Save to Map: if PRN exists in map, then add NavInfo to vector of structs
-                    // Else add new PRN as key and GPS data structure as Value
-                    if (mapGPS.find(GPS.PRN) == mapGPS.end()) {
-                        // not found, therefore insert PRN and corresponding value
-                        vector<DataGPS> mapNavVector; mapNavVector.push_back(GPS);
-                        mapGPS.insert(pair<int, vector<DataGPS>>(GPS.PRN, mapNavVector));
-                    }
-                    else {
-                        // found, therefore add to existing PRN
-                        mapGPS[GPS.PRN].push_back(GPS);
-                    }
-                    break;
-                }
-                if (nlines < 8) {
-                    line.clear();
-                    getline(infile, line, '\n');
-                }
-            }
-        }
-
-        // GALILEO
-        if (ID.find('E') != std::string::npos) {
-            nlines = 0;
-            while ((!(infile >> std::ws).eof()) || (nlines <= 8)) {
-                // *** Deal with end of file error
-                if (infile.fail()) { break; }
-                // ***
-
-                if (line.find_first_not_of(' ') == string::npos) { continue; }
-                block.push_back(line); nlines++;
-
-                // New block of navigation message
-                if (nlines == 8) {
-                    // Now we must process the block of lines
-                    Rinex3Nav::DataGAL GAL = epochNavOrganizerGAL(block);
-                    block.clear(); line.clear();
-                    // Add organized data to data holder
-                    // Save to Map: if PRN exists in map, then add NavInfo to vector of structs
-                    // Else add new PRN as key and GAL data structure as Value
-                    if (mapGAL.find(GAL.PRN) == mapGAL.end()) {
-                        // not found, therefore insert PRN and corresponding value
-                        vector<DataGAL> mapNavVector; mapNavVector.push_back(GAL);
-                        mapGAL.insert(pair<int, vector<DataGAL>>(GAL.PRN, mapNavVector));
-                    }
-                    else {
-                        // found, therefore add to existing PRN
-                        mapGAL[GAL.PRN].push_back(GAL);
-                    }
-                    break;
-                }
-                if (nlines < 8) {
-                    line.clear();
-                    getline(infile, line, '\n');
-                }
-            }
-        }
-
-        // GLONASS
-        if (ID.find('R') != std::string::npos) {
-            nlines = 0;
-            while ((!(infile >> std::ws).eof()) || (nlines <= 4)) {
-                // *** Deal with end of file error
-                if (infile.fail()) { break; }
-                // ***
-
-                if (line.find_first_not_of(' ') == string::npos) { continue; }
-                block.push_back(line); nlines++;
-
-                // New block of navigation message
-                if (nlines == 4) {
-                    // Now we must process the block of lines
-                    Rinex3Nav::DataGLO GLO = epochNavOrganizerGLO(block);
-                    block.clear(); line.clear();
-                    // Add organized data to data holder
-                    // Save to Map: if PRN exists in map, then add NavInfo to vector of structs
-                    // Else add new PRN as key and GLO data structure as Value
-                    if (mapGLO.find(GLO.PRN) == mapGLO.end()) {
-                        // not found, therefore insert PRN and corresponding value
-                        vector<DataGLO> mapNavVector; mapNavVector.push_back(GLO);
-                        mapGLO.insert(pair<int, vector<DataGLO>>(GLO.PRN, mapNavVector));
-                    }
-                    else {
-                        // found, therefore add to existing PRN
-                        mapGLO[GLO.PRN].push_back(GLO);
-                    }
-                    break;
-                }
-                if (nlines < 4) {
-                    line.clear();
-                    getline(infile, line, '\n');
-                }
-            }
-        }
-
-        // BEIDO
-        if (ID.find('C') != std::string::npos) {
-            nlines = 0;
-            while ((!(infile >> std::ws).eof()) || (nlines <= 8)) {
-                // *** Deal with end of file error
-                if (infile.fail()) { break; }
-                // ***
-
-                if (line.find_first_not_of(' ') == string::npos) { continue; }
-                block.push_back(line); nlines++;
-
-                // New block of navigation message
-                if (nlines == 8) {
-                    // Now we must process the block of lines
-                    Rinex3Nav::DataBEI BEI = epochNavOrganizerBEI(block);
-                    block.clear(); line.clear();
-                    // Add organized data to data holder
-                    // Save to Map: if PRN exists in map, then add NavInfo to vector of structs
-                    // Else add new PRN as key and BEI data structure as Value
-                    if (mapBEI.find(BEI.PRN) == mapBEI.end()) {
-                        // not found, therefore insert PRN and corresponding value
-                        vector<DataBEI> mapNavVector; mapNavVector.push_back(BEI);
-                        mapBEI.insert(pair<int, vector<DataBEI>>(BEI.PRN, mapNavVector));
-                    }
-                    else {
-                        // found, therefore add to existing PRN
-                        mapBEI[BEI.PRN].push_back(BEI);
-                    }
-                    break;
-                }
-                if (nlines < 8) {
-                    line.clear();
-                    getline(infile, line, '\n');
-                }
-            }
-        }
-    }
-
-    // Update the attribute of Navigation Objects
-    _navGPS = mapGPS;
-    _navGLO = mapGLO;
-    _navGAL = mapGAL;
-    _navBEI = mapBEI;
+    readBody(infile, SatelliteSystem::Mixed);
 }
-
 
 
 void Rinex3Nav::clear()
@@ -1100,8 +768,8 @@ void Rinex3Nav::clear()
     _navBEI.clear();
 }
 
-template<typename T>
-void Rinex3Nav::readBody(map<int, vector<T> > &mapData, ifstream& infile, SatelliteSystem sys)
+
+void Rinex3Nav::readBody(ifstream& infile, SatelliteSystem sys)
 {
     vector<string> block;
     string line;
@@ -1110,116 +778,105 @@ void Rinex3Nav::readBody(map<int, vector<T> > &mapData, ifstream& infile, Satell
     // Reading Navigation Data Body
     while (!infile.eof()) {
         line.clear();
-        // Temporarily store line from input file
         getline(infile, line, '\n'); nlines++;
+
         if (line.find_first_not_of(' ') == std::string::npos) { continue; }
-        // Adjust line spaces before adding to block
-        if (nlines != 1) {
+
+        string ID;
+        if (nlines != 1){
             line = line.substr(4, line.length());
         }
+        if (nlines == 1 && sys == SatelliteSystem::Mixed){
+            ID = line.substr(0, 1);
+            ID == "G" ? size = 4 : size = 8;
+        }
+
         block.push_back(line);
         // New block of navigation message
         if (nlines == size) {
-            // Now we must process the block of lines
-            T data;
-            switch (sys) {
-            case SatelliteSystem::GPS:{
-                data = epochNavOrganizerGPS(block);
-                break;
-            }
-            case SatelliteSystem::Galileo:{
-                data = epochNavOrganizerGAL(block);
-                break;
-            }
-            case SatelliteSystem::Glonass:{
-                data = epochNavOrganizerGLO(block);
-                break;
-            }
-            case SatelliteSystem::BeiDou:{
-                data = epochNavOrganizerBEI(block);
-                break;
-            }
-            case SatelliteSystem::Mixed:{
-
-                break;
-            }
-            default:
-                break;
-            }
+            saveBlock(block, sys, ID);
 
             block.clear();
             nlines = 0;
-            // Add organized data to data holder
-            // Save to Map: if PRN exists in map, then add NavInfo to vector of structs
-            // Else add new PRN as key and GPS data structure as Value
-
-            if (mapData.find(data.PRN) == mapData.end()) {
-                // not found, therefore insert PRN and corresponding value
-                vector<T> mapNavVector;
-                mapNavVector.push_back(data);
-                mapData.insert(pair<int, vector<T>>(data.PRN, mapNavVector));
-            }
-            else {
-                // found, therefore add to existing PRN
-                mapData[data.PRN].push_back(data);
-            }
         }
     }
 }
 
+void Rinex3Nav::saveBlock(std::vector<std::string>& block, SatelliteSystem sys, std::string ID)
+{
+    switch (sys) {
+    case SatelliteSystem::GPS:{
+        DataGPS data = epochNavOrganizerGPS(block);
+
+        if (_navGPS.find(data.PRN) == _navGPS.end()) {
+            // not found, therefore insert PRN and corresponding value
+            vector<DataGPS> mapNavVector;
+            mapNavVector.push_back(data);
+            _navGPS.insert(pair<int, vector<DataGPS>>(data.PRN, mapNavVector));
+        }
+        else {
+            // found, therefore add to existing PRN
+            _navGPS[data.PRN].push_back(data);
+        }
+        break;
+    }
+    case SatelliteSystem::Galileo:{
+        DataGAL data = epochNavOrganizerGAL(block);
+
+        if (_navGAL.find(data.PRN) == _navGAL.end()) {
+            // not found, therefore insert PRN and corresponding value
+            vector<DataGAL> mapNavVector;
+            mapNavVector.push_back(data);
+            _navGAL.insert(pair<int, vector<DataGAL>>(data.PRN, mapNavVector));
+        }
+        else {
+            // found, therefore add to existing PRN
+            _navGAL[data.PRN].push_back(data);
+        }
+        break;
+    }
+    case SatelliteSystem::Glonass:{
+        DataGLO data = epochNavOrganizerGLO(block);
+
+        if (_navGLO.find(data.PRN) == _navGLO.end()) {
+            // not found, therefore insert PRN and corresponding value
+            vector<DataGLO> mapNavVector;
+            mapNavVector.push_back(data);
+            _navGLO.insert(pair<int, vector<DataGLO>>(data.PRN, mapNavVector));
+        }
+        else {
+            // found, therefore add to existing PRN
+            _navGLO[data.PRN].push_back(data);
+        }
+        break;
+    }
+    case SatelliteSystem::BeiDou:{
+        DataBEI data = epochNavOrganizerBEI(block);
+
+        if (_navBEI.find(data.PRN) == _navBEI.end()) {
+            // not found, therefore insert PRN and corresponding value
+            vector<DataBEI> mapNavVector;
+            mapNavVector.push_back(data);
+            _navBEI.insert(pair<int, vector<DataBEI>>(data.PRN, mapNavVector));
+        }
+        else {
+            // found, therefore add to existing PRN
+            _navBEI[data.PRN].push_back(data);
+        }
+
+        break;
+    }
+    case SatelliteSystem::Mixed:{
+        saveBlock(block, getSatelliteSystem(ID.data()));
+        break;
+    }
+    default:
+        break;
+    }
+}
 
 
 //===================================Structs============================================
-Rinex3Nav::DataGPS::DataGPS(){}
-
-Rinex3Nav::DataGPS &Rinex3Nav::DataGPS::operator=(DataGPS &&other)
-{
-    if (this != &other){
-        this->isAvailable = other.isAvailable;
-        this->PRN = other.PRN;
-        this->epochInfo = other.epochInfo;
-        this->gpsTime = other.gpsTime;
-        this->clockBias = other.clockBias;
-        this->clockDrift = other.clockDrift;
-        this->clockDriftRate = other.clockDriftRate;
-
-        this->IODE = other.IODE;
-        this->Crs = other.Crs;
-        this->Delta_n = other.Delta_n;
-        this->M0 = other.M0;
-
-        this->Cuc = other.Cuc;
-        this->Eccentricity = other.Eccentricity;
-        this->Cus = other.Cus;
-        this->Sqrt_a = other.Sqrt_a;
-
-        this->TOE = other.TOE;
-        this->Cic = other.Cic;
-        this->OMEGA0 = other.OMEGA0;
-        this->Cis = other.Cis;
-
-        this->i0 = other.i0;
-        this->Crc = other.Crc;
-        this->omega = other.omega;
-        this->OMEGA_DOT = other.OMEGA_DOT;
-
-        this->IDOT = other.IDOT;
-        this->L2_codes_channel = other.L2_codes_channel;
-        this->GPS_week = other.GPS_week;
-        this->L2_P_data_flag = other.L2_P_data_flag;
-
-        this->svAccuracy = other.svAccuracy;
-        this->svHealth = other.svHealth;
-        this->TGD = other.TGD;
-        this->IODC = other.IODC;
-
-        this->transmission_time = other.transmission_time;
-        this->fit_interval = other.fit_interval;
-        this->spare1 = other.spare1;
-        this->spare2 = other.spare2;
-    }
-    return *this;
-}
 
 std::vector<std::optional<double>> Rinex3Nav::DataGPS::toVec()
 {
@@ -1266,37 +923,6 @@ std::vector<std::optional<double>> Rinex3Nav::DataGPS::toVec()
     return vecData;
 }
 
-Rinex3Nav::DataGLO::DataGLO(){}
-
-Rinex3Nav::DataGLO &Rinex3Nav::DataGLO::operator=(DataGLO &&other)
-{
-    if (this != &other){
-        this->isAvailable = other.isAvailable;
-        this->PRN = other.PRN;
-        this->epochInfo = other.epochInfo;
-        this->gpsTime = other.gpsTime;
-        this->clockBias = other.clockBias;
-        this->relFreqBias = other.relFreqBias;
-        this->messageFrameTime = other.messageFrameTime;
-
-        this->satPosX = other.satPosX;
-        this->satVelX = other.satVelX;
-        this->satAccX = other.satAccX;
-        this->satHealth = other.satHealth;
-
-        this->satPosY = other.satPosY;
-        this->satVelY = other.satVelY;
-        this->satAccY = other.satAccY;
-        this->freqNum = other.freqNum;
-
-        this->satPosZ = other.satPosZ;
-        this->satVelZ = other.satVelZ;
-        this->satAccZ = other.satAccZ;
-        this->infoAge = other.infoAge;
-    }
-    return *this;
-}
-
 std::vector<std::optional<double>> Rinex3Nav::DataGLO::toVec()
 {
     std::vector<std::optional<double>> vecData;
@@ -1320,13 +946,6 @@ std::vector<std::optional<double>> Rinex3Nav::DataGLO::toVec()
     vecData.push_back(infoAge);
 
     return vecData;
-}
-
-Rinex3Nav::DataGAL::DataGAL(){}
-
-Rinex3Nav::DataGAL &Rinex3Nav::DataGAL::operator=(DataGAL &&other)
-{
-
 }
 
 std::vector<std::optional<double>> Rinex3Nav::DataGAL::toVec()
@@ -1373,13 +992,6 @@ std::vector<std::optional<double>> Rinex3Nav::DataGAL::toVec()
 
 
     return vecData;
-}
-
-Rinex3Nav::DataBEI::DataBEI(){}
-
-Rinex3Nav::DataBEI &Rinex3Nav::DataBEI::operator=(DataBEI &&other)
-{
-
 }
 
 std::vector<std::optional<double>> Rinex3Nav::DataBEI::toVec()

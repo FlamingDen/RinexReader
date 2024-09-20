@@ -43,3 +43,18 @@ QString getSatelliteSystem(SatelliteSystem s)
 }
 
 QString getSatelliteSystem(int s){ return getSatelliteSystem(static_cast<SatelliteSystem>(s));}
+
+SatelliteSystem getSatelliteSystem(QString sys)
+{
+    if (sys == "G")
+        return SatelliteSystem::GPS;
+    if (sys == "E")
+        return SatelliteSystem::Galileo;
+    if (sys == "R")
+        return SatelliteSystem::Glonass;
+    if (sys == "C")
+        return SatelliteSystem::BeiDou;
+    if (sys == "M")
+        return SatelliteSystem::Mixed;
+    return SatelliteSystem::None;
+}

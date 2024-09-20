@@ -1,4 +1,5 @@
 #include "rinex3obs.h"
+#include <regex>
 using namespace std;
 
 // CONSTRUCTOR AND DESTRUCTOR DEFINITIONS
@@ -68,13 +69,46 @@ map<string, vector<string>> obsTypesHeader(vector<string> block) {
 void Rinex3Obs::obsHeader(ifstream& infile) {
     // String tokens to look for
     const string sTokenVER = "RINEX VERSION / TYPE";
-    const string sTokenPOS = "APPROX POSITION XYZ";
-    const string sTokenDEL = "ANTENNA: DELTA";
-    const string sTokenOBS = "SYS / # / OBS TYPES";
+    const string sTokenPGM = "PGM / RUN BY / DATE";
     const string sTokenCOM = "COMMENT";
+
+    const string sTokenMarkerNAME = "MARKER NAME";
+    const string sTokenMarkerNUM = "MARKER NUMBER";
+    const string sTokenMarkerTYPE = "MARKER TYPE ";
+
+    const string sTokenObsAGENCY = "OBSERVER / AGENCY";
+    const string sTokenObsRTV = "REC # / TYPE / VERS";
+
+    const string sTokenANTTYPE = "ANT # / TYPE";
+    const string sTokenPOS = "APPROX POSITION XYZ";
+    const string sTokenDEL = "ANTENNA: DELTA H/E/N";
+    const string sTokenDELXYZ = "ANTENNA: DELTA X/Y/Z";
+    const string sTokenANTPHAS = "ANTENNA:PHASECENTER";
+    const string sTokenANTSIGHTXYZ = "ANTENNA: B.SIGHT XYZ";
+    const string sTokenANTZERODIRAZI = "ANTENNA: ZERODIR AZI";
+    const string sTokenANTZERODIRXYZ = "ANTENNA: ZERODIR XYZ";
+
+    const string sTokenCENOFMASSXYZ = "CENTER OF MASS: XYZ";
+    const string sTokenOBS = "SYS / # / OBS TYPES";
+    const string sTokenSIGSTRUNIT = "SIGNAL STRENGTH UNIT";
+    const string sTokenINTERVAL = "INTERVAL";
     const string sTokenFIR = "TIME OF FIRST OBS";
     const string sTokenLAS = "TIME OF LAST OBS";
+    const string sTokenRCV = "RCV CLOCK OFFS APPL";
+    const string sTokenDCBSAPPL = "SYS / DCBS APPLIED";
+    const string sTokenPCVSAPPL = "SYS / PCVS APPLIED";
+    const string sTokenSCALEFACTOR = "SYS / SCALE FACTOR";
+    const string sTokenPHASESH = "SYS / PHASE SHIFT";
+
+    const string sTokenGLOSLOT = "GLONASS SLOT / FRQ";
+    const string sTokenGLOSCPB = "GLONASS COD/PHS/BIS";
+
+
+    const string sTokenLEAP = "LEAP SECONDS";
+    const string sTokenSAT = "OF SATELLITES";
+    const string sTokenPRNOFOBS = "PRN / # OF OBS";
     const string sTokenEND = "END OF HEADER";
+
     // A vector to hold block of sentences pertaining to observation types
     vector<string> types;
     // To hold contents of a line from input file
@@ -87,65 +121,194 @@ void Rinex3Obs::obsHeader(ifstream& infile) {
         getline(infile, line, '\n');
         // Looking for keywords in Header Part...
         size_t found_VER = line.find(sTokenVER);
+        size_t found_PGM = line.find(sTokenPGM);
+        size_t found_COM = line.find(sTokenCOM);
+
+        size_t found_MarkerNAME = line.find(sTokenMarkerNAME);
+        size_t found_MarkerNUM = line.find(sTokenMarkerNUM);
+        size_t found_MarkerTYPE = line.find(sTokenMarkerTYPE);
+
+        size_t found_ObsAGENCY = line.find(sTokenObsAGENCY);
+        size_t found_ObsRTV = line.find(sTokenObsRTV);
+
+        size_t found_ANTTYPE = line.find(sTokenANTTYPE);
         size_t found_POS = line.find(sTokenPOS);
         size_t found_DEL = line.find(sTokenDEL);
+        size_t found_DELXYZ = line.find(sTokenDELXYZ);
+        size_t found_ANTPHAS = line.find(sTokenANTPHAS);
+        size_t found_ANTSIGHTXYZ = line.find(sTokenANTSIGHTXYZ);
+        size_t found_ANTZERODIRAZI = line.find(sTokenANTZERODIRAZI);
+        size_t found_ANTZERODIRXYZ = line.find(sTokenANTZERODIRXYZ);
+
+
+        size_t found_CENOFMASSXYZ = line.find(sTokenCENOFMASSXYZ);
         size_t found_OBS = line.find(sTokenOBS);
-        size_t found_COM = line.find(sTokenCOM);
+        size_t found_SIGSTRUNIT = line.find(sTokenSIGSTRUNIT);
+        size_t found_INTERVAL = line.find(sTokenINTERVAL);
         size_t found_FIR = line.find(sTokenFIR);
         size_t found_LAS = line.find(sTokenLAS);
+        size_t found_RCV = line.find(sTokenRCV);
+        size_t found_DCBSAPPL = line.find(sTokenDCBSAPPL);
+        size_t found_PCVSAPPL = line.find(sTokenPCVSAPPL);
+        size_t found_SCALEFACTOR = line.find(sTokenSCALEFACTOR);
+        size_t found_PHASESH = line.find(sTokenPHASESH);
+
+        size_t found_GLOSLOT = line.find(sTokenGLOSLOT);
+        size_t found_GLOSCPB = line.find(sTokenGLOSCPB);
+
+        size_t found_LEAP = line.find(sTokenLEAP);
+        size_t found_SAT = line.find(sTokenSAT);
+        size_t found_PRNOFOBS = line.find(sTokenPRNOFOBS);
         size_t found_END = line.find(sTokenEND);
 
-        // Finding Comments, meaning skip!
-        if (found_COM != string::npos) {
-            continue;
-        }
-        // RINEX Version
-        else if (found_VER != string::npos) {
+        if (found_VER != string::npos) {
             istringstream iss(line);
             // Rinex type should be stored in 4th word of line
             vector<string> words{ istream_iterator<string>{iss}, istream_iterator<string>{} };
             _Header.rinexType = words[words.size() - 5];
             words.clear();
+            continue;
         }
-        // Approximate Position
-        else if (found_POS != string::npos) {
+        if (found_PGM != string::npos){
+            line = line.substr(0, 60);
+            string word;
+            for (unsigned i = 0; i < line.length(); i += 20) {
+                word = line.substr(i, 20);
+                if (word.find_first_not_of(' ') == std::string::npos)
+                    continue;
+                word = regex_replace(word,regex{R"(^\s+|\s+$)"}, "");
+                _Header.pmg.push_back(word);
+                word.clear();
+            }
+            continue;
+        }
+        if (found_COM != string::npos) { continue; }
+
+        if (found_MarkerNAME != string::npos){
+            line = line.substr(0, 60);
+            _Header.marker_name.append(regex_replace(line,regex{R"(^\s+|\s+$)"}, ""));
+            continue;
+        }
+        if (found_MarkerNUM != string::npos){
+            line = line.substr(0, 20);
+            _Header.marker_num.append(regex_replace(line,regex{R"(^\s+|\s+$)"}, ""));
+            continue;
+        }
+        if (found_MarkerTYPE != string::npos){
+            line = line.substr(0, 20);
+            _Header.marker_type.append(regex_replace(line,regex{R"(^\s+|\s+$)"}, ""));
+            continue;
+        }
+
+        if (found_ObsAGENCY != string::npos){
+            string lineObserver = line.substr(0, 20);
+            line = line.substr(21, 40);
+            _Header.obs_agency.push_back(regex_replace(lineObserver,regex{R"(^\s+|\s+$)"}, ""));
+            _Header.obs_agency.push_back(regex_replace(line,regex{R"(^\s+|\s+$)"}, ""));
+            continue;
+            ;}
+        if (found_ObsRTV != string::npos){
+            line = line.substr(0, 60);
+            string word;
+            for (unsigned i = 0; i < line.length(); i += 20) {
+                word = line.substr(i, 20);
+                if (word.find_first_not_of(' ') == std::string::npos)
+                    continue;
+                word = regex_replace(word,regex{R"(^\s+|\s+$)"}, "");
+                _Header.rec_type_vers.push_back(word);
+                word.clear();
+            }
+            continue;
+        }
+
+        if (found_ANTTYPE != string::npos){
+            line = line.substr(0, 40);
+            string word;
+            for (unsigned i = 0; i < line.length(); i += 20) {
+                word = line.substr(i, 20);
+                if (word.find_first_not_of(' ') == std::string::npos)
+                    continue;
+                word = regex_replace(word,regex{R"(^\s+|\s+$)"}, "");
+                _Header.rec_type_vers.push_back(word);
+                word.clear();
+            }
+            continue;
+        }
+        if (found_POS != string::npos) {
             istringstream iss(line);
             copy(istream_iterator<double>(iss),
                  istream_iterator<double>(),
-                 back_inserter(_Header.approxPosXYZ));
+                 back_inserter(_Header.approx_pos_xyz));
             // Adding a term for Clock Offset
-            _Header.approxPosXYZ.push_back(0);
+            _Header.approx_pos_xyz.push_back(0);
+            continue;
         }
-        // Antenna Delta
-        else if (found_DEL != string::npos) {
+        if (found_DEL != string::npos) {
             istringstream iss(line);
             copy(istream_iterator<double>(iss),
                  istream_iterator<double>(),
-                 back_inserter(_Header.antDeltaHEN));
+                 back_inserter(_Header.ant_delta_hen));
+            continue;
         }
-        // Types of Observations
-        else if (found_OBS != string::npos) {
+        if (found_DELXYZ != string::npos) {
+            istringstream iss(line);
+            copy(istream_iterator<double>(iss),
+                 istream_iterator<double>(),
+                 back_inserter(_Header.ant_delta_xyz));
+            continue;
+        }
+        if (found_ANTPHAS != string::npos) {
+            line = line.substr(5,55);
+            istringstream iss(line);
+            copy(istream_iterator<double>(iss),
+                 istream_iterator<double>(),
+                 back_inserter(_Header.ant_phasecenter));
+            continue;
+        }
+        if (found_ANTSIGHTXYZ != string::npos) {
+            istringstream iss(line);
+            copy(istream_iterator<double>(iss),
+                 istream_iterator<double>(),
+                 back_inserter(_Header.ant_sight_xyz));
+            continue;
+        }
+        if (found_ANTZERODIRAZI != string::npos) {
+            istringstream iss(line);
+            copy(istream_iterator<double>(iss),
+                 istream_iterator<double>(),
+                 _Header.ant_zerodir_azi);
+            continue;
+        }
+        if (found_ANTZERODIRXYZ != string::npos) {
+            istringstream iss(line);
+            copy(istream_iterator<double>(iss),
+                 istream_iterator<double>(),
+                 back_inserter(_Header.ant_zerodir_xyz));
+            continue;
+        }
+
+        if (found_OBS != string::npos) {
             // Removing identifier from block of lines
             eraseSubStr(line, sTokenOBS);
             // Storing in vector for processing later
             types.push_back(line);
+            continue;
         }
-        // Time of First Obs
-        else if (found_FIR != string::npos) {
+        if (found_FIR != string::npos) {
             istringstream iss(line);
             copy(istream_iterator<double>(iss),
                  istream_iterator<double>(),
-                 back_inserter(_Header.firstObsTime));
+                 back_inserter(_Header.first_obs_time));
+            continue;
         }
-        // Time of Last Obs
-        else if (found_LAS != string::npos) {
+        if (found_LAS != string::npos) {
             istringstream iss(line);
             copy(istream_iterator<double>(iss),
                  istream_iterator<double>(),
-                 back_inserter(_Header.lastObsTime));
+                 back_inserter(_Header.last_obs_time));
+            continue;
         }
-        // Finding End of Header Info
-        else if (found_END != string::npos) {
+        if (found_END != string::npos) {
             break;
         }
     }
@@ -314,6 +477,7 @@ void Rinex3Obs::clear(Rinex3Obs::ObsEpochInfo& obs) {
 
 // To clear contents in observation data structure
 void Rinex3Obs::clear(Rinex3Obs::ObsHeaderInfo& header) {
+
     header.antDeltaHEN.clear();
     header.approxPosXYZ.clear();
     header.firstObsTime.clear();

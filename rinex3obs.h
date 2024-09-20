@@ -17,11 +17,40 @@ public:
     // DATA STRUCTURES
     // To store important header information
     struct ObsHeaderInfo {
+        float version;
         std::string rinexType;
-        std::vector<double> approxPosXYZ;
-        std::vector<double> antDeltaHEN;
-        std::vector<double> firstObsTime;
-        std::vector<double> lastObsTime;
+        std::vector<std::string> pmg;
+
+        std::string marker_name = "";
+        std::string marker_num = "";
+        std::string marker_type = "";
+
+        std::vector<std::string> obs_agency;
+        std::vector<std::string> rec_type_vers;
+
+        std::vector<std::string> ant_type;
+        std::vector<float> approx_pos_xyz;
+        std::vector<float> ant_delta_hen;
+        std::vector<float> ant_delta_xyz;
+        std::vector<float> ant_phasecenter;
+        std::vector<float> ant_sight_xyz;
+        float ant_zerodir_azi;
+        std::vector<float> ant_zerodir_xyz;
+
+        std::vector<float> center_of_mass_xyz;
+        std::string sig_str_unit;
+        float interval;
+        bool rcv_clocl = 0;
+        std::vector<float> dcbs_appl;
+        std::vector<float> pcvs_appl;
+        std::vector<float> scale_factor;
+        std::map<std::string, std::vector<float>> phase_shift;
+
+        std::map<std::string, int> glonass_slot;
+        std::vector<int> leap_seconds;
+
+        std::vector<double> first_obs_time;
+        std::vector<double> last_obs_time;
         std::map<std::string, std::vector<std::string>> obsTypes;
     };
     // To store observations in an epoch
