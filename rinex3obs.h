@@ -17,9 +17,10 @@ public:
     // DATA STRUCTURES
     // To store important header information
     struct ObsHeaderInfo {
-        float version;
+        double version;
         std::string rinexType;
         std::vector<std::string> pmg;
+        std::vector<std::string> comments;
 
         std::string marker_name = "";
         std::string marker_num = "";
@@ -29,28 +30,30 @@ public:
         std::vector<std::string> rec_type_vers;
 
         std::vector<std::string> ant_type;
-        std::vector<float> approx_pos_xyz;
-        std::vector<float> ant_delta_hen;
-        std::vector<float> ant_delta_xyz;
-        std::vector<float> ant_phasecenter;
-        std::vector<float> ant_sight_xyz;
-        float ant_zerodir_azi;
-        std::vector<float> ant_zerodir_xyz;
+        std::vector<double> approx_pos_xyz;
+        std::vector<double> ant_delta_hen;
+        std::vector<double> ant_delta_xyz;
+        std::vector<double> ant_phasecenter;
+        std::vector<double> ant_sight_xyz;
+        double ant_zerodir_azi;
+        std::vector<double> ant_zerodir_xyz;
 
-        std::vector<float> center_of_mass_xyz;
+        std::vector<double> center_of_mass_xyz;
         std::string sig_str_unit;
-        float interval;
-        bool rcv_clocl = 0;
-        std::vector<float> dcbs_appl;
-        std::vector<float> pcvs_appl;
-        std::vector<float> scale_factor;
-        std::map<std::string, std::vector<float>> phase_shift;
-
-        std::map<std::string, int> glonass_slot;
-        std::vector<int> leap_seconds;
-
+        double interval;
         std::vector<double> first_obs_time;
         std::vector<double> last_obs_time;
+        bool rcv_clock = 0;
+        std::vector<std::string> dcbs_appl;
+        std::vector<std::string> pcvs_appl;
+        std::vector<double> scale_factor;
+        std::map<std::string, std::map<std::string, double>> phase_shift;
+
+        std::map<std::string, int> glonass_slot;
+        std::map<std::string, double> glonass_cpd;
+        std::vector<int> leap_seconds;
+
+
         std::map<std::string, std::vector<std::string>> obsTypes;
     };
     // To store observations in an epoch
@@ -63,15 +66,8 @@ public:
         int numSatsGAL;
         int numSatsBEI;
         std::map<std::string, std::map<int, std::vector<double>>> observations;
-        void clear() {
-            epochRecord.clear();
-            numSatsGAL = 0;
-            numSatsGLO = 0;
-            numSatsGPS = 0;
-            numSatsBEI = 0;
-            observations.clear();
-            recClockOffset = 0;
-        }
+
+        void clear();
     };
 
     // Attributes

@@ -105,9 +105,13 @@ void Rinex3Obs::obsHeader(ifstream& infile) {
 
 
     const string sTokenLEAP = "LEAP SECONDS";
-    const string sTokenSAT = "OF SATELLITES";
-    const string sTokenPRNOFOBS = "PRN / # OF OBS";
     const string sTokenEND = "END OF HEADER";
+
+    //in the end
+    //const string sTokenSAT = "OF SATELLITES";
+    //const string sTokenPRNOFOBS = "PRN / # OF OBS";
+
+
 
     // A vector to hold block of sentences pertaining to observation types
     vector<string> types;
@@ -157,14 +161,17 @@ void Rinex3Obs::obsHeader(ifstream& infile) {
         size_t found_GLOSCPB = line.find(sTokenGLOSCPB);
 
         size_t found_LEAP = line.find(sTokenLEAP);
-        size_t found_SAT = line.find(sTokenSAT);
-        size_t found_PRNOFOBS = line.find(sTokenPRNOFOBS);
         size_t found_END = line.find(sTokenEND);
+
+        //size_t found_SAT = line.find(sTokenSAT);
+        //size_t found_PRNOFOBS = line.find(sTokenPRNOFOBS);
+
 
         if (found_VER != string::npos) {
             istringstream iss(line);
             // Rinex type should be stored in 4th word of line
             vector<string> words{ istream_iterator<string>{iss}, istream_iterator<string>{} };
+            _Header.version = std::stod(words[0]);
             _Header.rinexType = words[words.size() - 5];
             words.clear();
             continue;
@@ -182,7 +189,11 @@ void Rinex3Obs::obsHeader(ifstream& infile) {
             }
             continue;
         }
-        if (found_COM != string::npos) { continue; }
+        if (found_COM != string::npos) {
+            line = regex_replace(line.substr(0,60), regex{R"(\s+$)"}, "");
+            _Header.comments.push_back(line);
+            continue;
+        }
 
         if (found_MarkerNAME != string::npos){
             line = line.substr(0, 60);
@@ -202,7 +213,7 @@ void Rinex3Obs::obsHeader(ifstream& infile) {
 
         if (found_ObsAGENCY != string::npos){
             string lineObserver = line.substr(0, 20);
-            line = line.substr(21, 40);
+            line = line.substr(20, 39);
             _Header.obs_agency.push_back(regex_replace(lineObserver,regex{R"(^\s+|\s+$)"}, ""));
             _Header.obs_agency.push_back(regex_replace(line,regex{R"(^\s+|\s+$)"}, ""));
             continue;
@@ -229,12 +240,13 @@ void Rinex3Obs::obsHeader(ifstream& infile) {
                 if (word.find_first_not_of(' ') == std::string::npos)
                     continue;
                 word = regex_replace(word,regex{R"(^\s+|\s+$)"}, "");
-                _Header.rec_type_vers.push_back(word);
+                _Header.ant_type.push_back(word);
                 word.clear();
             }
             continue;
         }
         if (found_POS != string::npos) {
+            line = line.substr(0,60);
             istringstream iss(line);
             copy(istream_iterator<double>(iss),
                  istream_iterator<double>(),
@@ -244,6 +256,7 @@ void Rinex3Obs::obsHeader(ifstream& infile) {
             continue;
         }
         if (found_DEL != string::npos) {
+            line = line.substr(0,60);
             istringstream iss(line);
             copy(istream_iterator<double>(iss),
                  istream_iterator<double>(),
@@ -251,6 +264,7 @@ void Rinex3Obs::obsHeader(ifstream& infile) {
             continue;
         }
         if (found_DELXYZ != string::npos) {
+            line = line.substr(0,60);
             istringstream iss(line);
             copy(istream_iterator<double>(iss),
                  istream_iterator<double>(),
@@ -266,6 +280,7 @@ void Rinex3Obs::obsHeader(ifstream& infile) {
             continue;
         }
         if (found_ANTSIGHTXYZ != string::npos) {
+            line = line.substr(0,60);
             istringstream iss(line);
             copy(istream_iterator<double>(iss),
                  istream_iterator<double>(),
@@ -273,13 +288,13 @@ void Rinex3Obs::obsHeader(ifstream& infile) {
             continue;
         }
         if (found_ANTZERODIRAZI != string::npos) {
+            line = line.substr(0,14);
+            _Header.ant_zerodir_azi = std::stod(line);
             istringstream iss(line);
-            copy(istream_iterator<double>(iss),
-                 istream_iterator<double>(),
-                 _Header.ant_zerodir_azi);
             continue;
         }
         if (found_ANTZERODIRXYZ != string::npos) {
+            line = line.substr(0,60);
             istringstream iss(line);
             copy(istream_iterator<double>(iss),
                  istream_iterator<double>(),
@@ -287,11 +302,29 @@ void Rinex3Obs::obsHeader(ifstream& infile) {
             continue;
         }
 
+        if (found_CENOFMASSXYZ != string::npos) {
+            line = line.substr(0,60);
+            istringstream iss(line);
+            copy(istream_iterator<double>(iss),
+                 istream_iterator<double>(),
+                 back_inserter(_Header.center_of_mass_xyz));
+            continue;
+        }
         if (found_OBS != string::npos) {
             // Removing identifier from block of lines
             eraseSubStr(line, sTokenOBS);
             // Storing in vector for processing later
             types.push_back(line);
+            continue;
+        }
+        if (found_SIGSTRUNIT != string::npos) {
+            line = line.substr(0,20);
+            _Header.sig_str_unit = regex_replace(line,regex{R"(^\s+|\s+$)"}, "");
+            continue;
+        }
+        if (found_INTERVAL != string::npos) {
+            line = line.substr(0,10);
+            _Header.interval = std::stod(line);
             continue;
         }
         if (found_FIR != string::npos) {
@@ -308,10 +341,76 @@ void Rinex3Obs::obsHeader(ifstream& infile) {
                  back_inserter(_Header.last_obs_time));
             continue;
         }
+        if (found_RCV != string::npos) {
+            line = line.substr(0,10);
+            _Header.rcv_clock = std::stoi(line);
+            continue;
+        }
+        if (found_DCBSAPPL != string::npos) {
+            istringstream iss(line.substr(0, 60));
+            copy(istream_iterator<string>(iss),
+                 istream_iterator<string>(),
+                 back_inserter(_Header.dcbs_appl));
+            continue;
+        }
+        if (found_PCVSAPPL != string::npos) {
+            istringstream iss(line.substr(0, 60));
+            copy(istream_iterator<string>(iss),
+                 istream_iterator<string>(),
+                 back_inserter(_Header.pcvs_appl));
+            continue;
+        }
+        if (found_SCALEFACTOR != string::npos) {
+            //!!!!
+            continue;
+        }
+        if (found_PHASESH != string::npos) {
+            istringstream iss(line.substr(0, 60));
+            //!!!
+        }
+
+        if (found_GLOSLOT != string::npos) {
+            line = line.substr(0, 60);
+            int size = std::stoi(line.substr(0, 3));
+            while(size != 0){
+                istringstream iss(line.substr(4, 60));
+                vector<string> words{ istream_iterator<string>{iss}, istream_iterator<string>{} };
+                for (std::size_t i = 0; i < words.size(); i += 2){
+                    _Header.glonass_slot.insert(std::pair<string, int>(words[i], stoi(words[i+1])));
+                    size--;
+                }
+                if (size == 0)
+                    break;
+                line.clear();
+                getline(infile, line ,'\n');
+                line = line.substr(0, 60);
+            }
+            continue;
+        }
+        if (found_GLOSCPB != string::npos) {
+            line = line.substr(0, 60);
+            istringstream iss(line);
+            vector<string> words{ istream_iterator<string>{iss}, istream_iterator<string>{} };
+            for (std::size_t i = 0; i < words.size(); i += 2){
+                _Header.glonass_cpd.insert(std::pair<string, double>(words[i], stod(words[i+1])));
+            }
+            continue;
+        }
+
+
+        if (found_LEAP != string::npos) {
+            line = line.substr(0, 24);
+            istringstream iss(line);
+            copy(istream_iterator<int>(iss),
+                 istream_iterator<int>(),
+                 back_inserter(_Header.leap_seconds));
+            continue;
+        }
         if (found_END != string::npos) {
             break;
         }
     }
+
     // Organizing the observation types
     _Header.obsTypes = obsTypesHeader(types);
     if (_Header.obsTypes.count("G") > 0) { _obsTypesGPS = _Header.obsTypes["G"]; }
@@ -478,11 +577,22 @@ void Rinex3Obs::clear(Rinex3Obs::ObsEpochInfo& obs) {
 // To clear contents in observation data structure
 void Rinex3Obs::clear(Rinex3Obs::ObsHeaderInfo& header) {
 
-    header.antDeltaHEN.clear();
-    header.approxPosXYZ.clear();
-    header.firstObsTime.clear();
-    header.lastObsTime.clear();
+    header.ant_delta_hen.clear();
+    header.approx_pos_xyz.clear();
+    header.first_obs_time.clear();
+    header.last_obs_time.clear();
     header.obsTypes.clear();
     header.rinexType.clear();
 }
 //=======================================================================================
+
+void Rinex3Obs::ObsEpochInfo::clear()
+{
+    epochRecord.clear();
+    numSatsGAL = 0;
+    numSatsGLO = 0;
+    numSatsGPS = 0;
+    numSatsBEI = 0;
+    observations.clear();
+    recClockOffset = 0;
+}

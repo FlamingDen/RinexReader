@@ -4,6 +4,7 @@
 
 #include "facadedb.h"
 #include "rinexreader.h"
+#include "rinexnamegenerator.h"
 
 void uploadDatatoDB(FacadeDB* db, RinexReader& rr);
 void testFacadeDB();
@@ -15,6 +16,7 @@ int main(int argc, char *argv[])
     using Qt::endl;
     out << QCoreApplication::applicationDirPath() << endl;
 
+/*
     //==========================Declare=============================================
     QString obs("C:/Utils/RinexSample/goml299o.23o");
     QString navGPS("C:/Utils/RinexSample/goml299o.23n");
@@ -32,6 +34,7 @@ int main(int argc, char *argv[])
     //=============================RinexReader API(sample)==========================
 
     RinexReader rr(obs,navPaths);
+    Rinex3Obs::ObsHeaderInfo headObs = rr.getObsHeaderInfo();
 
     //QList<Rinex3Obs::ObsEpochInfo> inf = rr.getEpochs();
     ViewNav viewNav;
@@ -45,6 +48,7 @@ int main(int argc, char *argv[])
     rr.clearNavData();
     rr.nextNav();
     viewNav = rr.getNav();
+*/
 
     //rr.saveAsCSV(pathCSVobs, RinexType::OBSERVATION);
     //rr.saveAsCSV(pathCSVnav, RinexType::NAVIGATION);
@@ -89,6 +93,16 @@ int main(int argc, char *argv[])
     rr.clearNav();
     rr.clearObs();*/
     //==============================================================================
+
+
+    RinexNameGenerator rng;
+    std::cout <<  rng.generateUrl("BARA","a","6", "1", "2024") << std::endl;
+    out << "File names: "<< endl;
+    for(const std::string& x : rng.generateRinexFilesNames("BARA","a","1", "5", "2024")){
+        std::cout << x << std::endl;
+    }
+
+
 
 }
 

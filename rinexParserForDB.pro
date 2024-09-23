@@ -15,6 +15,7 @@ SOURCES += \
         pch.cpp \
         rinex3nav.cpp \
         rinex3obs.cpp \
+        rinexnamegenerator.cpp \
         rinexreader.cpp \
         stringutils.cpp \
         timeutils.cpp
@@ -34,6 +35,7 @@ HEADERS += \
     pch.h \
     rinex3nav.h \
     rinex3obs.h \
+    rinexnamegenerator.h \
     rinexreader.h \
     stringutils.h \
     timeutils.h
