@@ -1,4 +1,5 @@
 #include "fileio.h"
+
 using namespace std;
 
 // File Opener --> Initiates File pointer safely

@@ -1,7 +1,6 @@
 #ifndef RINEXREADER_H
 #define RINEXREADER_H
 
-#include <QString>
 #include <QObject>
 #include "rinex3obs.h"
 #include "rinex3nav.h"

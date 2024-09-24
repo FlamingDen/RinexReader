@@ -1,5 +1,6 @@
 #include "timeutils.h"
-using namespace std;
+#include <cmath>
+#include <cstdlib>
 
 // Source: BOOK called GPS Theory Algorithm & Applications by Guochang Xu (Pg 18-20)
 double gpsTime(std::vector<double> epochInfo) {

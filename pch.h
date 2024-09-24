@@ -12,7 +12,7 @@
 #include <iterator>
 #include <map>
 #include <vector>
-#include <math.h>
+#include <cmath>
 #include <algorithm>
 
 #endif // PCH_H

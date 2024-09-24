@@ -1,5 +1,8 @@
 #include "rinex3obs.h"
+#include "timeutils.h"
+#include "stringutils.h"
 #include <regex>
+
 using namespace std;
 
 // CONSTRUCTOR AND DESTRUCTOR DEFINITIONS

@@ -3,8 +3,8 @@
 
 #include <QString>
 #include <QList>
-#include <rinex3nav.h>
 #include <rinex3obs.h>
+#include <rinex3nav.h>
 
 class CSVCreator
 {

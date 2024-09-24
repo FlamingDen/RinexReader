@@ -1,5 +1,6 @@
 #ifndef ENUMTYPES_H
 #define ENUMTYPES_H
+
 #include <QString>
 
 enum class RinexType {

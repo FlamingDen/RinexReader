@@ -4,7 +4,6 @@
 
 #include "facadedb.h"
 #include "rinexreader.h"
-#include "rinexnamegenerator.h"
 
 void uploadDatatoDB(FacadeDB* db, RinexReader& rr);
 void testFacadeDB();
@@ -48,11 +47,11 @@ int main(int argc, char *argv[])
     rr.clearNavData();
     rr.nextNav();
     viewNav = rr.getNav();
-*/
+
 
     //rr.saveAsCSV(pathCSVobs, RinexType::OBSERVATION);
     //rr.saveAsCSV(pathCSVnav, RinexType::NAVIGATION);
-
+*/
 /*
     //work with navigation files
     out << "Nav info :" << endl;
@@ -91,19 +90,8 @@ int main(int argc, char *argv[])
 
 
     rr.clearNav();
-    rr.clearObs();*/
-    //==============================================================================
-
-
-    RinexNameGenerator rng;
-    std::cout <<  rng.generateUrl("BARA","a","6", "1", "2024") << std::endl;
-    out << "File names: "<< endl;
-    for(const std::string& x : rng.generateRinexFilesNames("BARA","a","1", "5", "2024")){
-        std::cout << x << std::endl;
-    }
-
-
-
+    rr.clearObs();
+    //==============================================================================*/
 }
 
 void uploadDatatoDB(FacadeDB* db, RinexReader &rr){

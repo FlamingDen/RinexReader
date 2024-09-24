@@ -1,6 +1,5 @@
 #include "facadedb.h"
 
-#include <QtSql>
 #include <QString>
 #include <QVariant>
 
