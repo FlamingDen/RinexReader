@@ -22,10 +22,10 @@ RinexReader::RinexReader(QString path_obs, QString path_nav) :  RinexReader()
     init(path_nav, RinexType::NAVIGATION);
 }
 
-RinexReader::RinexReader(QStringList paths_nav) : RinexReader()
+RinexReader::RinexReader(QStringList paths_nav, RinexType type) : RinexReader()
 {
     this->paths_nav = paths_nav;
-    init(paths_nav.at(0),RinexType::NAVIGATION);
+    init(paths_nav.at(0), type);
 }
 
 RinexReader::RinexReader(QString path_obs, QStringList paths_nav) : RinexReader(paths_nav)
@@ -247,11 +247,6 @@ ViewNav RinexReader::getNav() const
 {
     ViewNav view_nav = nav;
     return view_nav;
-}
-
-FileIO RinexReader::getFIO() const
-{
-    return FIO;
 }
 
 QStringList RinexReader::getPaths_nav() const

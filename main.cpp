@@ -3,6 +3,7 @@
 #include <QTextStream>
 
 #include "facadedb.h"
+#include "rinexnamegenerator.h"
 #include "rinexreader.h"
 
 void uploadDatatoDB(FacadeDB* db, RinexReader& rr);
@@ -15,9 +16,9 @@ int main(int argc, char *argv[])
     using Qt::endl;
     out << QCoreApplication::applicationDirPath() << endl;
 
-/*
+
     //==========================Declare=============================================
-    QString obs("C:/Utils/RinexSample/goml299o.23o");
+    QString pathObs("C:/Utils/RinexSample/goml299o.23o");
     QString navGPS("C:/Utils/RinexSample/goml299o.23n");
     QString navGLO("C:/Utils/RinexSample/goml299o.23g");
     QString navGAL("C:/Utils/RinexSample/goml299o.23l");
@@ -32,10 +33,10 @@ int main(int argc, char *argv[])
 
     //=============================RinexReader API(sample)==========================
 
-    RinexReader rr(obs,navPaths);
+    RinexReader rr(pathObs,navPaths);
     Rinex3Obs::ObsHeaderInfo headObs = rr.getObsHeaderInfo();
 
-    //QList<Rinex3Obs::ObsEpochInfo> inf = rr.getEpochs();
+    QList<Rinex3Obs::ObsEpochInfo> inf = rr.getEpochs();
     ViewNav viewNav;
 
     rr.nextNav();
@@ -48,10 +49,13 @@ int main(int argc, char *argv[])
     rr.nextNav();
     viewNav = rr.getNav();
 
+    rr.readNav(0);
+    rr.readNav(navGPS);
+
 
     //rr.saveAsCSV(pathCSVobs, RinexType::OBSERVATION);
     //rr.saveAsCSV(pathCSVnav, RinexType::NAVIGATION);
-*/
+
 /*
     //work with navigation files
     out << "Nav info :" << endl;

@@ -14,7 +14,7 @@ public:
     RinexReader();
     RinexReader(QString path, RinexType type);
     RinexReader(QString path_obs,QString path_nav);
-    RinexReader(QStringList paths_nav);
+    RinexReader(QStringList paths_nav, RinexType type = RinexType::NAVIGATION);
     RinexReader(QString path_obs, QStringList paths_nav);
     ~RinexReader();
 
@@ -37,13 +37,12 @@ public:
 
     //Getter
     QString getPath_obs() const;
+    QString getCurr_path_nav() const;
     QStringList getPaths_nav() const;
-    FileIO getFIO() const;
     double getRinex_version_obs() const;
     double getRinex_version_nav() const;
     int getRinex_type_obs() const;
     int getRinex_type_nav() const;
-    QString getCurr_path_nav() const;
 
     //Setter
     void setPath_obs(QString newPath_obs);
