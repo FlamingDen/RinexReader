@@ -1,4 +1,5 @@
 #include "rinexnamegenerator.h"
+
 #include <algorithm>
 #include <chrono>
 #include <regex>
@@ -127,7 +128,7 @@ std::vector<std::string> RinexNameGenerator::generateRinexFilesNames(IdPDP ssss,
 //-----------------------------------------------------------------------------------------------------------------------
 bool Date::isDateTrue(const int day, const int month, const int year, const int hour, const int min, const int sec)
 {
-    if (day > 31 || !day || month > 12 || !month || hour > 23 || min > 59 || sec > 59)
+    if (day > 31 || day < 1 || !day || month > 12 || month < 1 || !month || hour > 23 || hour < 0 || min > 59 || min < 0 || sec > 59 || sec < 0)
         return false;
     int n(year % 4 ? 28 : 29);
     switch (month) {

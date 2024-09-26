@@ -15,6 +15,20 @@ public:
     // DATA STRUCTURES
     // To store important header information
     struct ObsHeaderInfo {
+
+        struct ScaleFactor{
+            std::string sat_system;
+            int scale;
+            std::vector<std::string> types;
+        };
+
+        struct PhaseShifts
+        {
+            std::string code;
+            std::optional<double> shift_correction;
+            std::optional<std::vector<std::string>> sats;
+        };
+
         double version;
         std::string rinexType;
         std::vector<std::string> pmg;
@@ -31,7 +45,7 @@ public:
         std::vector<double> approx_pos_xyz;
         std::vector<double> ant_delta_hen;
         std::vector<double> ant_delta_xyz;
-        std::vector<double> ant_phasecenter;
+        std::map<std::string, std::map<std::string, std::vector<double>>> ant_phasecenter;
         std::vector<double> ant_sight_xyz;
         double ant_zerodir_azi;
         std::vector<double> ant_zerodir_xyz;
@@ -41,11 +55,11 @@ public:
         double interval;
         std::vector<double> first_obs_time;
         std::vector<double> last_obs_time;
-        bool rcv_clock = 0;
+        int rcv_clock = 0;
         std::vector<std::string> dcbs_appl;
         std::vector<std::string> pcvs_appl;
-        std::vector<double> scale_factor;
-        std::map<std::string, std::map<std::string, double>> phase_shift;
+        std::vector<ScaleFactor> scale_factor;
+        std::map<std::string, PhaseShifts> phase_shifts;
 
         std::map<std::string, int> glonass_slot;
         std::map<std::string, double> glonass_cpd;
@@ -91,6 +105,10 @@ public:
     void clear(Rinex3Obs::ObsHeaderInfo& header);
     void setObservations(std::map<std::string, std::map<int, std::vector<double>>> observations);
     std::map<int, double> specificObsMapper(std::map<int, std::vector<double>> obsGPS, std::vector<std::string> obsTypes, std::string specificObs);
+
+private:
+    std::vector<Rinex3Obs::ObsHeaderInfo::ScaleFactor> obsScaleFactorHeader(std::vector<std::string> block);
+    std::map<std::string, Rinex3Obs::ObsHeaderInfo::PhaseShifts> obsPhaseShiftsHeader(std::vector<std::string> block);
 };
 
 #endif // RINEX3OBS_H

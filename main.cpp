@@ -3,7 +3,6 @@
 #include <QTextStream>
 
 #include "facadedb.h"
-#include "rinexnamegenerator.h"
 #include "rinexreader.h"
 
 void uploadDatatoDB(FacadeDB* db, RinexReader& rr);
@@ -36,7 +35,7 @@ int main(int argc, char *argv[])
     RinexReader rr(pathObs,navPaths);
     Rinex3Obs::ObsHeaderInfo headObs = rr.getObsHeaderInfo();
 
-    QList<Rinex3Obs::ObsEpochInfo> inf = rr.getEpochs();
+    //QList<Rinex3Obs::ObsEpochInfo> inf = rr.getEpochs();
     ViewNav viewNav;
 
     rr.nextNav();
@@ -55,46 +54,6 @@ int main(int argc, char *argv[])
 
     //rr.saveAsCSV(pathCSVobs, RinexType::OBSERVATION);
     //rr.saveAsCSV(pathCSVnav, RinexType::NAVIGATION);
-
-/*
-    //work with navigation files
-    out << "Nav info :" << endl;
-    out <<"All nav files: " << endl;
-    QStringList paths = rr.getPaths_nav();
-    for(const QString &s :  qAsConst(paths)){ out << s << endl; }
-    out << endl;
-    Rinex3Nav infNav;
-
-    rr.nextNav();
-    out << rr.getCurr_path_nav() << endl;
-    out << rr.getRinex_type_nav() << endl;
-    out << rr.getRinex_version_nav() << endl << endl;
-    infNav = rr.getNav();
-
-
-
-
-    rr.nextNav();
-    out << rr.getCurr_path_nav() << endl;
-    out << rr.getRinex_type_nav() << endl;
-    out << rr.getRinex_version_nav() << endl << endl;
-    infNav = rr.getNav();
-
-    rr.nextNav();
-    out << rr.getCurr_path_nav() << endl;
-    out << rr.getRinex_type_nav() << endl;
-    out << rr.getRinex_version_nav() << endl << endl;
-    infNav = rr.getNav();
-
-    rr.nextNav();
-    out << rr.getCurr_path_nav() << endl;
-    out << rr.getRinex_type_nav() << endl;
-    out << rr.getRinex_version_nav() << endl << endl;
-    infNav = rr.getNav();
-
-
-    rr.clearNav();
-    rr.clearObs();
     //==============================================================================*/
 }
 

@@ -51,12 +51,15 @@ map<string, vector<string>> obsTypesHeader(vector<string> block) {
         if (sLength == 1) {
             sys = words[0];
             nTypes = stoi(words[1]);
-            if (nTypes > 13) {
-                i++;
-                line = line + block[i];
+            if (nTypes > 13 ) {
+                int start_lines = i++;
+                double number_of_lines = ceil(nTypes / 13.);
+                for (int j(i); j < start_lines + number_of_lines ; j++, i++)
+                    line += block[j];
                 words.clear();
                 istringstream iss2(line);
                 copy(istream_iterator<string>(iss2), istream_iterator<string>(), back_inserter(words));
+                i--;
             }
             for (unsigned int i = 2; i < words.size(); i++) {
                 temp.push_back(words[i]);
@@ -66,6 +69,96 @@ map<string, vector<string>> obsTypesHeader(vector<string> block) {
         }
     }
     return types;
+}
+
+// A function to organize observation types as stated in header of rinex observation file
+std::vector<Rinex3Obs::ObsHeaderInfo::ScaleFactor> Rinex3Obs::obsScaleFactorHeader(std::vector<std::string> block) {
+    // Initializing variables to hold information
+    map<string, vector<string>> types;
+    vector<Rinex3Obs::ObsHeaderInfo::ScaleFactor> vec_sf;
+    // Satellite system identifier
+    string sys;
+    int scale;
+    // Number of observation types
+    int nTypes;
+    // Temporary vars
+    string line; vector<string> temp;
+    for (unsigned int i = 0; i < block.size(); i++) {
+        line = block[i];
+        // Splitting words in the line
+        istringstream iss(line);
+        vector<string> words{ istream_iterator<string>{iss}, istream_iterator<string>{} };
+        // Challenge is to organize based on satellite system identifier
+        // First letter of line gives the satellite system
+        // If number of types > 13, types extended on next lines.
+        size_t sLength = words[0].length();
+        if (sLength == 1) {
+            sys = words[0];
+            scale = stoi(words[1]);
+            string count = line.substr(6,3);
+            if(count.empty() || stoi(count) == 0){
+                Rinex3Obs::ObsHeaderInfo::ScaleFactor sf;
+                sf.sat_system = sys;
+                sf.scale = scale;
+                sf.types = _Header.obsTypes[sys];
+                vec_sf.push_back(sf);
+                temp.clear();
+                continue;
+            }
+
+            nTypes = stoi(count);
+            if (nTypes > 13 ) {
+                int start_lines = i++;
+                double number_of_lines = ceil(nTypes / 13.);
+                for (int j(i); j < start_lines + number_of_lines ; j++, i++)
+                    line += block[j];
+                words.clear();
+                istringstream iss2(line);
+                copy(istream_iterator<string>(iss2), istream_iterator<string>(), back_inserter(words));
+                i--;
+            }
+            for (unsigned int i = 2; i < words.size(); i++) {
+                temp.push_back(words[i]);
+            }
+        }
+        Rinex3Obs::ObsHeaderInfo::ScaleFactor sf;
+        sf.sat_system = sys;
+        sf.scale = scale;
+        sf.types = temp;
+        vec_sf.push_back(sf);
+        temp.clear();
+    }
+    return vec_sf;
+}
+
+std::map<string, Rinex3Obs::ObsHeaderInfo::PhaseShifts> Rinex3Obs::obsPhaseShiftsHeader(std::vector<std::string> block)
+{
+    std::map<std::string, ObsHeaderInfo::PhaseShifts> phase_shifts;
+    ObsHeaderInfo::PhaseShifts shift;
+    string sys;
+    string code;
+    optional<string> correction;
+    optional<vector<string>> temp;
+
+    string line;
+    for (size_t i(0); i < block.size(); i++) {
+        line = block[i];
+        istringstream iss(line);
+        vector<string> words{ istream_iterator<string>{iss}, istream_iterator<string>{} };
+        size_t sLength = words[0].length();
+        if (sLength == 1) {
+            sys = words[0];
+            shift.code = words[1];
+            correction = line.substr(6,8);
+            if(correction->empty())
+                shift.shift_correction = nullopt;
+            //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        }
+
+    }
+
+
+    return phase_shifts;
 }
 
 // Extracts and stores the header information from Rinex v3 File
@@ -118,6 +211,8 @@ void Rinex3Obs::obsHeader(ifstream& infile) {
 
     // A vector to hold block of sentences pertaining to observation types
     vector<string> types;
+    vector<string> scale_factor;
+    vector<string> phase_shifts;
     // To hold contents of a line from input file
     string line;
 
@@ -171,11 +266,11 @@ void Rinex3Obs::obsHeader(ifstream& infile) {
 
 
         if (found_VER != string::npos) {
-            istringstream iss(line);
+            istringstream iss(line.substr(0, 60));
             // Rinex type should be stored in 4th word of line
             vector<string> words{ istream_iterator<string>{iss}, istream_iterator<string>{} };
             _Header.version = std::stod(words[0]);
-            _Header.rinexType = words[words.size() - 5];
+            _Header.rinexType = words[words.size() - 1];
             words.clear();
             continue;
         }
@@ -216,7 +311,7 @@ void Rinex3Obs::obsHeader(ifstream& infile) {
 
         if (found_ObsAGENCY != string::npos){
             string lineObserver = line.substr(0, 20);
-            line = line.substr(20, 39);
+            line = line.substr(20, 40);
             _Header.obs_agency.push_back(regex_replace(lineObserver,regex{R"(^\s+|\s+$)"}, ""));
             _Header.obs_agency.push_back(regex_replace(line,regex{R"(^\s+|\s+$)"}, ""));
             continue;
@@ -224,7 +319,7 @@ void Rinex3Obs::obsHeader(ifstream& infile) {
         if (found_ObsRTV != string::npos){
             line = line.substr(0, 60);
             string word;
-            for (unsigned i = 0; i < line.length(); i += 20) {
+            for (size_t  i(0); i < line.length(); i += 20) {
                 word = line.substr(i, 20);
                 if (word.find_first_not_of(' ') == std::string::npos)
                     continue;
@@ -254,8 +349,6 @@ void Rinex3Obs::obsHeader(ifstream& infile) {
             copy(istream_iterator<double>(iss),
                  istream_iterator<double>(),
                  back_inserter(_Header.approx_pos_xyz));
-            // Adding a term for Clock Offset
-            _Header.approx_pos_xyz.push_back(0);
             continue;
         }
         if (found_DEL != string::npos) {
@@ -275,11 +368,15 @@ void Rinex3Obs::obsHeader(ifstream& infile) {
             continue;
         }
         if (found_ANTPHAS != string::npos) {
-            line = line.substr(5,55);
-            istringstream iss(line);
+            line = line.substr(0,60);
+            string sys = line.substr(0,1);
+            string code = line.substr(2,3);
+            map<string, vector<double>> data{make_pair(code,vector<double>{})};
+            istringstream iss(line.substr(5,55));
             copy(istream_iterator<double>(iss),
                  istream_iterator<double>(),
-                 back_inserter(_Header.ant_phasecenter));
+                 back_inserter(data[code]));
+            _Header.ant_phasecenter.insert(make_pair(sys, data));
             continue;
         }
         if (found_ANTSIGHTXYZ != string::npos) {
@@ -293,7 +390,6 @@ void Rinex3Obs::obsHeader(ifstream& infile) {
         if (found_ANTZERODIRAZI != string::npos) {
             line = line.substr(0,14);
             _Header.ant_zerodir_azi = std::stod(line);
-            istringstream iss(line);
             continue;
         }
         if (found_ANTZERODIRXYZ != string::npos) {
@@ -322,7 +418,7 @@ void Rinex3Obs::obsHeader(ifstream& infile) {
         }
         if (found_SIGSTRUNIT != string::npos) {
             line = line.substr(0,20);
-            _Header.sig_str_unit = regex_replace(line,regex{R"(^\s+|\s+$)"}, "");
+            _Header.sig_str_unit = regex_replace(line,regex{R"(\s+$)"}, "");
             continue;
         }
         if (found_INTERVAL != string::npos) {
@@ -345,7 +441,7 @@ void Rinex3Obs::obsHeader(ifstream& infile) {
             continue;
         }
         if (found_RCV != string::npos) {
-            line = line.substr(0,10);
+            line = line.substr(0,6);
             _Header.rcv_clock = std::stoi(line);
             continue;
         }
@@ -364,12 +460,12 @@ void Rinex3Obs::obsHeader(ifstream& infile) {
             continue;
         }
         if (found_SCALEFACTOR != string::npos) {
-            //!!!!
+            scale_factor.push_back(line.substr(0,60));
             continue;
         }
         if (found_PHASESH != string::npos) {
-            istringstream iss(line.substr(0, 60));
-            //!!!
+            phase_shifts.push_back(line.substr(0, 60));
+            continue;
         }
 
         if (found_GLOSLOT != string::npos) {
@@ -416,6 +512,12 @@ void Rinex3Obs::obsHeader(ifstream& infile) {
 
     // Organizing the observation types
     _Header.obsTypes = obsTypesHeader(types);
+    if(!scale_factor.empty())
+        _Header.scale_factor = obsScaleFactorHeader(scale_factor);
+    if(!phase_shifts.empty())
+        _Header.phase_shifts = obsPhaseShiftsHeader(phase_shifts);
+
+
     if (_Header.obsTypes.count("G") > 0) { _obsTypesGPS = _Header.obsTypes["G"]; }
     if (_Header.obsTypes.count("R") > 0) { _obsTypesGLO = _Header.obsTypes["R"]; }
     if (_Header.obsTypes.count("E") > 0) { _obsTypesGAL = _Header.obsTypes["E"]; }

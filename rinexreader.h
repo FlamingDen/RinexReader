@@ -1,7 +1,8 @@
 #ifndef RINEXREADER_H
 #define RINEXREADER_H
 
-#include <QObject>
+#include <QList>
+
 #include "rinex3obs.h"
 #include "rinex3nav.h"
 #include "enumtypes.h"
