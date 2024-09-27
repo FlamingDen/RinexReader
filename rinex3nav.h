@@ -222,54 +222,94 @@ public:
         std::vector<std::optional<double>> toVec();
     };
 
+    // struct for halping to store info about "time system correction"
+    struct TimeSysCorr
+    {
+        std::string type;
+        double a0_coef;
+        double a1_coef;
+        int ref_time;
+        int week_number;
+        std::optional<std::string> source;
+        std::optional<int> utc_id;
+
+        void clear();
+    };
+
+    struct IonCorr{
+        std::string type;
+        std::vector<double> params;
+        std::optional<std::string> time_mark;
+        std::optional<int> sv_id;
+
+        void clear();
+    };
+
     // Headers
     struct HeaderGPS {
-        double leapSec;
+        double version;
+        std::string type;
+
         std::vector<std::string> pgm;
+        std::vector<std::string> comments;
 
         // Ionospheric alpha and beta constants
-        std::vector<double> ialpha;
-        std::vector<double> ibeta;
+        IonCorr ialpha;
+        IonCorr ibeta;
 
         // Time System correction
-        std::vector<double> GPUT;
+        TimeSysCorr GPUT;
+        std::vector<double> leap_seconds;
 
         void clear();
     };
 
     struct HeaderGLO {
-        double leapSec;
-        std::vector<std::string> pgm;
+        double version;
+        std::string type;
 
+        std::vector<std::string> pgm;
+        std::vector<std::string> comments;
+
+        // None Ionospheric corr --!!!
         // Time System correction
-        std::vector<double> GLUT;
+        TimeSysCorr GLUT;
+        std::vector<double> leap_seconds;
 
         void clear();
     };
 
     struct HeaderGAL {
-        double leapSec;
+        double version;
+        std::string type;
+
         std::vector<std::string> pgm;
+        std::vector<std::string> comments;
 
         // Ionospheric constants
-        std::vector<double> gal;
+        IonCorr gal;
 
         // Time System correction
-        std::vector<double> GAUT;
+        TimeSysCorr GAUT;
+        std::vector<double> leap_seconds;
 
         void clear();
     };
 
     struct HeaderBEI {
-        double leapSec;
+        double version;
+        std::string type;
+
         std::vector<std::string> pgm;
+        std::vector<std::string> comments;
 
         // Ionospheric alpha and beta constants
-        std::vector<double> ialpha;
-        std::vector<double> ibeta;
+        IonCorr ialpha;
+        IonCorr ibeta;
 
         // Time System correction
-        std::vector<double> BDUT;
+        TimeSysCorr BDUT;
+        std::vector<double> leap_seconds;
 
         void clear();
     };
@@ -303,6 +343,7 @@ public:
 private:
     void readHead(std::ifstream& infile, SatelliteSystem sys);
     std::vector<std::string> getPMGHeader(std::string line);
+    TimeSysCorr getTimeSysCorr(std::string line);
 
     void readBody(std::ifstream& infile, SatelliteSystem sys);
     void saveBlock(std::vector<std::string>& block, SatelliteSystem sys, std::string ID = "");

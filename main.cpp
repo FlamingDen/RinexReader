@@ -35,7 +35,7 @@ int main(int argc, char *argv[])
     RinexReader rr(pathObs,navPaths);
     Rinex3Obs::ObsHeaderInfo headObs = rr.getObsHeaderInfo();
 
-    //QList<Rinex3Obs::ObsEpochInfo> inf = rr.getEpochs();
+    QList<Rinex3Obs::ObsEpochInfo> inf = rr.getEpochs();
     ViewNav viewNav;
 
     rr.nextNav();

@@ -38,7 +38,7 @@ RinexReader::~RinexReader()
     close();
 }
 
-RinexReader::RinexReader(const RinexReader &other) : RinexReader(other.getPath_obs(),other.getPaths_nav()){
+RinexReader::RinexReader(const RinexReader &other) : RinexReader(other.getPathObs(),other.getPathsNav()){
     close();
     this->setPath_obs(other.path_obs);
     this->setPaths_nav(other.paths_nav);
@@ -238,7 +238,7 @@ void RinexReader::close()
 }
 
 
-QString RinexReader::getPath_obs() const
+const QString& RinexReader::getPathObs() const
 {
     return path_obs;
 }
@@ -249,38 +249,38 @@ ViewNav RinexReader::getNav() const
     return view_nav;
 }
 
-QStringList RinexReader::getPaths_nav() const
+const QStringList& RinexReader::getPathsNav() const
 {
     return paths_nav;
 }
 
-double RinexReader::getRinex_version_obs() const
+const double& RinexReader::getRinexVersionObs() const
 {
     return rinex_version_obs;
 }
 
-double RinexReader::getRinex_version_nav() const
+const double& RinexReader::getRinexVersionNav() const
 {
     return rinex_version_nav;
 }
 
-int RinexReader::getRinex_type_obs() const
+const int& RinexReader::getRinexTypeObs() const
 {
     return rinex_type_obs;
 }
 
-int RinexReader::getRinex_type_nav() const
+const int& RinexReader::getRinexTypeNav() const
 {
     return rinex_type_nav;
 }
 
-void RinexReader::setPath_obs(QString newPath_obs)
+void RinexReader::setPathObs(QString newPath_obs)
 {
     clearObs();
     init(newPath_obs, RinexType::OBSERVATION);
 }
 
-void RinexReader::setPaths_nav(const QStringList &newPaths_nav)
+void RinexReader::setPathsNav(const QStringList &newPaths_nav)
 {
     clearRRNav();
     paths_nav = newPaths_nav;

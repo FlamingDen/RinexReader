@@ -71,11 +71,12 @@ map<string, vector<string>> obsTypesHeader(vector<string> block) {
     return types;
 }
 
-// A function to organize observation types as stated in header of rinex observation file
+// A function to organize scale factor as stated in header of rinex observation file
 std::vector<Rinex3Obs::ObsHeaderInfo::ScaleFactor> Rinex3Obs::obsScaleFactorHeader(std::vector<std::string> block) {
     // Initializing variables to hold information
     map<string, vector<string>> types;
     vector<Rinex3Obs::ObsHeaderInfo::ScaleFactor> vec_sf;
+    Rinex3Obs::ObsHeaderInfo::ScaleFactor sf;
     // Satellite system identifier
     string sys;
     int scale;
@@ -96,13 +97,12 @@ std::vector<Rinex3Obs::ObsHeaderInfo::ScaleFactor> Rinex3Obs::obsScaleFactorHead
             sys = words[0];
             scale = stoi(words[1]);
             string count = line.substr(6,3);
-            if(count.empty() || stoi(count) == 0){
-                Rinex3Obs::ObsHeaderInfo::ScaleFactor sf;
+            if(count.find_first_not_of(' ') == string::npos || stoi(count) == 0){
                 sf.sat_system = sys;
                 sf.scale = scale;
                 sf.types = _Header.obsTypes[sys];
                 vec_sf.push_back(sf);
-                temp.clear();
+                sf.clear();
                 continue;
             }
 
@@ -121,24 +121,26 @@ std::vector<Rinex3Obs::ObsHeaderInfo::ScaleFactor> Rinex3Obs::obsScaleFactorHead
                 temp.push_back(words[i]);
             }
         }
-        Rinex3Obs::ObsHeaderInfo::ScaleFactor sf;
         sf.sat_system = sys;
         sf.scale = scale;
         sf.types = temp;
         vec_sf.push_back(sf);
         temp.clear();
+        sf.clear();
     }
     return vec_sf;
 }
 
-std::map<string, Rinex3Obs::ObsHeaderInfo::PhaseShifts> Rinex3Obs::obsPhaseShiftsHeader(std::vector<std::string> block)
+// A function to organize phase shift as stated in header of rinex observation file
+std::map<string, std::vector<Rinex3Obs::ObsHeaderInfo::PhaseShifts>> Rinex3Obs::obsPhaseShiftsHeader(std::vector<std::string> block)
 {
-    std::map<std::string, ObsHeaderInfo::PhaseShifts> phase_shifts;
+    std::map<std::string, vector<ObsHeaderInfo::PhaseShifts>> phase_shifts;
     ObsHeaderInfo::PhaseShifts shift;
     string sys;
-    string code;
-    optional<string> correction;
-    optional<vector<string>> temp;
+
+    string correction;
+    int count;
+    optional<vector<string>> sats;
 
     string line;
     for (size_t i(0); i < block.size(); i++) {
@@ -149,15 +151,39 @@ std::map<string, Rinex3Obs::ObsHeaderInfo::PhaseShifts> Rinex3Obs::obsPhaseShift
         if (sLength == 1) {
             sys = words[0];
             shift.code = words[1];
+
             correction = line.substr(6,8);
-            if(correction->empty())
-                shift.shift_correction = nullopt;
-            //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+            if(correction.find_first_not_of(' ') != string::npos){
+                shift.shift_correction = stod(correction);
+            }
+
+            string str_count = line.substr(16,2);
+            if(str_count.find_first_not_of(' ') == string::npos || stoi(str_count) == 0){
+                phase_shifts[sys].push_back(shift);
+                shift.clear();
+                continue;
+            }
+
+            count = stoi(str_count);
+            if (count > 10){
+                int start_lines = i++;
+                double number_of_lines = ceil(count / 10.);
+                for (int j(i); j < start_lines + number_of_lines ; j++, i++)
+                    line += block[j];
+                words.clear();
+                istringstream iss2(line);
+                copy(istream_iterator<string>(iss2), istream_iterator<string>(), back_inserter(words));
+                i--;
+            }
+            for (size_t i(4); i < words.size(); i++) {
+                sats->push_back(words[i]);
+            }
         }
-
+        shift.sats = sats;
+        sats->clear();
+        phase_shifts[sys].push_back(shift);
+        shift.clear();
     }
-
-
     return phase_shifts;
 }
 
@@ -300,7 +326,7 @@ void Rinex3Obs::obsHeader(ifstream& infile) {
         }
         if (found_MarkerNUM != string::npos){
             line = line.substr(0, 20);
-            _Header.marker_num.append(regex_replace(line,regex{R"(^\s+|\s+$)"}, ""));
+            _Header.marker_num = regex_replace(line,regex{R"(^\s+|\s+$)"}, "");
             continue;
         }
         if (found_MarkerTYPE != string::npos){
@@ -472,7 +498,7 @@ void Rinex3Obs::obsHeader(ifstream& infile) {
             line = line.substr(0, 60);
             int size = std::stoi(line.substr(0, 3));
             while(size != 0){
-                istringstream iss(line.substr(4, 60));
+                istringstream iss(line.substr(4, 56));
                 vector<string> words{ istream_iterator<string>{iss}, istream_iterator<string>{} };
                 for (std::size_t i = 0; i < words.size(); i += 2){
                     _Header.glonass_slot.insert(std::pair<string, int>(words[i], stoi(words[i+1])));
@@ -533,10 +559,9 @@ vector<double> rinex3EpochRecordOrganizer(string line) {
     // Splitting words in the line
     istringstream iss(line);
     vector<string> words{ istream_iterator<string>{iss}, istream_iterator<string>{} };
-    for (string s : words) {
+    for (const string &s : words) {
         epochRecord.push_back(stod(s));
     }
-    // Return: Vector containing the Epoch Info
     return epochRecord;
 }
 
@@ -647,7 +672,7 @@ bool Rinex3Obs::obsEpoch(ifstream& infile) {
                 // Find number of sats in epoch
                 istringstream iss(line);
                 vector<string> words{ istream_iterator<string>{iss}, istream_iterator<string>{} };
-                for (string s : words) {
+                for (string &s : words) {
                     blockFirstLine.push_back(stoi(s));
                 }
                 nSatsEpoch = blockFirstLine[7];
@@ -700,4 +725,19 @@ void Rinex3Obs::ObsEpochInfo::clear()
     numSatsBEI = 0;
     observations.clear();
     recClockOffset = 0;
+}
+
+void Rinex3Obs::ObsHeaderInfo::ScaleFactor::clear()
+{
+    this->scale = 0;
+    this->types.clear();
+    this->types.clear();
+}
+
+void Rinex3Obs::ObsHeaderInfo::PhaseShifts::clear()
+{
+    this->code.clear();
+    if (sats.has_value())
+        sats->clear();
+    this->shift_correction = nullopt;
 }

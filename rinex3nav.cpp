@@ -7,19 +7,43 @@ Rinex3Nav::Rinex3Nav() {}
 
 Rinex3Nav::~Rinex3Nav() {}
 
-// A function to help with organizing GPS header
+// A function to help with organizing headers
 // Works for the alpha/beta ionospheric constants and time correction
-std::vector<double> headerHelperGPS(string line) {
-    line = line.substr(5, 55);
-    string word;
-    vector<double> data;
-    for (unsigned i = 0; i < line.length(); i += 12) {
-        word = line.substr(i, 12);
-        if (word.find_first_not_of(' ') == std::string::npos) { continue; }
-        data.push_back(stod(replaceChars(word, 'D', 'e')));
-        word.clear();
+Rinex3Nav::IonCorr getIonCorr(string line) {
+    Rinex3Nav::IonCorr ic;
+    ic.type = line.substr(0,4);
+    string temp_str;
+    for (unsigned i = 5; i < 53; i += 12) {
+        temp_str = line.substr(i, 12);
+        if (temp_str.find_first_not_of(' ') == std::string::npos) { continue; }
+        ic.params.push_back(stod(replaceChars(temp_str, 'D', 'e')));
+        temp_str.clear();
     }
-    return data;
+    temp_str = line.substr(54,1);
+    if(temp_str.find_first_not_of(' ') != string::npos)
+        ic.time_mark = temp_str;
+    temp_str =line.substr(56,2);
+    if(temp_str.find_first_not_of(' ') != string::npos)
+        ic.sv_id = stoi(temp_str);
+    return ic;
+}
+
+// A function to organization and reading data for time system correction
+Rinex3Nav::TimeSysCorr Rinex3Nav::getTimeSysCorr(std::string line)
+{
+    TimeSysCorr t;
+    t.type = line.substr(0,4);
+    t.a0_coef = stod(replaceChars(line.substr(5,17), 'D','e'));
+    t.a1_coef = stod(replaceChars(line.substr(22,16), 'D','e'));
+    t.ref_time = stoi(line.substr(38,7));
+    t.week_number = stoi(line.substr(45,5));
+    string temp = line.substr(51,5);
+    if(temp.find_first_not_of(' ') != string::npos)
+        t.source = temp;
+    temp = line.substr(57,2);
+    if(temp.find_first_not_of(' ') != string::npos)
+        t.utc_id = stoi(temp);
+    return t;
 }
 
 // Organizes Epoch Time Information into Vector
@@ -107,6 +131,7 @@ int Rinex3Nav::EpochMatcher(double obsTime, std::vector<Rinex3Nav::DataBEI> NAV)
 
 void Rinex3Nav::readHead(std::ifstream& infile, SatelliteSystem sys){
     //common tokens
+    const string sTokenVER = "RINEX VERSION / TYPE";
     const string sTokenPGM = "PGM / RUN BY / DATE";
     const string sTokenCOM = "COMMENT";
     const string sTokenIONO = "IONOSPHERIC CORR";
@@ -120,7 +145,7 @@ void Rinex3Nav::readHead(std::ifstream& infile, SatelliteSystem sys){
     case SatelliteSystem::GPS:{
         //iono
         const string sTokenGPSA = "GPSA";//= GPS alpha0 - alpha3
-        const string sTokenGPSB = "GPSB";//GPS beta0 - beta3
+        const string sTokenGPSB = "GPSB";//= GPS beta0 - beta3
         //time sys core
         const string sTokenGPUT = "GPUT";//= GPS - UTC (a0, a1)
 
@@ -129,6 +154,7 @@ void Rinex3Nav::readHead(std::ifstream& infile, SatelliteSystem sys){
             // Temporarily store line from input file
             getline(infile, line, '\n');
             // Looking for keywords in Header Part...
+            size_t found_VER = line.find(sTokenVER);
             size_t found_PGM = line.find(sTokenPGM);
             size_t found_COM = line.find(sTokenCOM);
             size_t found_IONO = line.find(sTokenIONO);
@@ -136,12 +162,22 @@ void Rinex3Nav::readHead(std::ifstream& infile, SatelliteSystem sys){
             size_t found_LEAP = line.find(sTokenLEAP);
             size_t found_END = line.find(sTokenEND);
 
+            if (found_VER != string::npos) {
+                istringstream iss(line.substr(0, 60));
+                // Rinex type should be stored in 4th word of line
+                vector<string> words{ istream_iterator<string>{iss}, istream_iterator<string>{} };
+                _headerGPS.version = std::stod(words[0]);
+                _headerGPS.type = words[words.size() - 1];
+                words.clear();
+                continue;
+            }
             if(found_PGM != string::npos){
                 _headerGPS.pgm = getPMGHeader(line);
                 continue;
             }
             // Finding Comments, meaning skip!
             if (found_COM != string::npos){
+                _headerGPS.comments.push_back(line.substr(0, 60));
                 continue;
             }
             // Finding Ionophseric Constants as per new format
@@ -149,10 +185,10 @@ void Rinex3Nav::readHead(std::ifstream& infile, SatelliteSystem sys){
                 size_t found_GPSA = line.find(sTokenGPSA);
                 size_t found_GPSB = line.find(sTokenGPSB);
                 if (found_GPSA != string::npos) {
-                    _headerGPS.ialpha = headerHelperGPS(line);
+                    _headerGPS.ialpha = getIonCorr(line);
                 }
                 if (found_GPSB != string::npos) {
-                    _headerGPS.ibeta = headerHelperGPS(line);
+                    _headerGPS.ibeta = getIonCorr(line);
                 }
                 continue;
             }
@@ -160,13 +196,17 @@ void Rinex3Nav::readHead(std::ifstream& infile, SatelliteSystem sys){
             if (found_CORR != string::npos) {
                 size_t found_GPUT = line.find(sTokenGPUT);
                 if (found_GPUT != string::npos)
-                    _headerGPS.GPUT = headerHelperGPS(line);
+                    _headerGPS.GPUT = getTimeSysCorr(line);
                 continue;
             }
             if (found_LEAP != string::npos) {
-                line = line.substr(0, 7);
-                _headerGPS.leapSec = stod(line);
+                line = line.substr(0, 24);
+                istringstream iss(line);
+                copy(istream_iterator<int>(iss),
+                     istream_iterator<int>(),
+                     back_inserter(_headerGPS.leap_seconds));
                 continue;
+
             }
             // Finding End of Header Info
             if (found_END != string::npos) {
@@ -184,6 +224,7 @@ void Rinex3Nav::readHead(std::ifstream& infile, SatelliteSystem sys){
 
             getline(infile, line, '\n');
 
+            size_t found_VER = line.find(sTokenVER);
             size_t found_PGM = line.find(sTokenPGM);
             size_t found_COM = line.find(sTokenCOM);
             size_t found_IONO = line.find(sTokenIONO);
@@ -191,18 +232,28 @@ void Rinex3Nav::readHead(std::ifstream& infile, SatelliteSystem sys){
             size_t found_LEAP = line.find(sTokenLEAP);
             size_t found_END = line.find(sTokenEND);
 
+            if (found_VER != string::npos) {
+                istringstream iss(line.substr(0, 60));
+                // Rinex type should be stored in 4th word of line
+                vector<string> words{ istream_iterator<string>{iss}, istream_iterator<string>{} };
+                _headerGAL.version = std::stod(words[0]);
+                _headerGAL.type = words[words.size() - 1];
+                words.clear();
+                continue;
+            }
             if(found_PGM != string::npos){
                 _headerGAL.pgm = getPMGHeader(line);
             }
             // Finding Comments, meaning skip!
             if (found_COM != string::npos) {
+                _headerGAL.comments.push_back(line.substr(0, 60));
                 continue;
             }
             // Finding Ionophseric Constants as per new format
             if (found_IONO != string::npos) {
                 size_t found_GAL = line.find(sTokenGAL);
                 if (found_GAL != string::npos) {
-                    _headerGAL.gal = headerHelperGPS(line);
+                    _headerGAL.gal = getIonCorr(line);
                 }
                 continue;
             }
@@ -210,13 +261,16 @@ void Rinex3Nav::readHead(std::ifstream& infile, SatelliteSystem sys){
             if (found_CORR != string::npos) {
                 size_t found_GAUT = line.find(sTokenGAUT);
                 if (found_GAUT != string::npos)
-                    _headerGAL.GAUT = headerHelperGPS(line);
+                    _headerGAL.GAUT = getTimeSysCorr(line);
                 continue;
             }
             // Finding Leap Second
             if (found_LEAP != string::npos) {
-                line = line.substr(0, 7);
-                _headerGAL.leapSec = stod(line);
+                line = line.substr(0, 24);
+                istringstream iss(line);
+                copy(istream_iterator<int>(iss),
+                     istream_iterator<int>(),
+                     back_inserter(_headerGAL.leap_seconds));
                 continue;
             }
             // Finding End of Header Info
@@ -236,40 +290,43 @@ void Rinex3Nav::readHead(std::ifstream& infile, SatelliteSystem sys){
 
             getline(infile, line, '\n');
 
+            size_t found_VER = line.find(sTokenVER);
             size_t found_PGM = line.find(sTokenPGM);
             size_t found_COM = line.find(sTokenCOM);
             size_t found_CORR = line.find(sTokenCORR);
             size_t found_LEAP = line.find(sTokenLEAP);
             size_t found_END = line.find(sTokenEND);
 
+            if (found_VER != string::npos) {
+                istringstream iss(line.substr(0, 60));
+                // Rinex type should be stored in 4th word of line
+                vector<string> words{ istream_iterator<string>{iss}, istream_iterator<string>{} };
+                _headerGLO.version = std::stod(words[0]);
+                _headerGLO.type = words[words.size() - 1];
+                words.clear();
+                continue;
+            }
             if(found_PGM != string::npos){
                 _headerGLO.pgm = getPMGHeader(line);
             }
-            // Finding Comments, meaning skip!
             if (found_COM != string::npos) {
+                _headerGLO.comments.push_back(line.substr(0, 60));
                 continue;
             }
-            // Finding Time Correction
             if (found_CORR != string::npos) {
-                // line = line.substr(0, 60);
-                // // Splitting words in the line
-                // istringstream iss(line);
-                // vector<string> dataS{ istream_iterator<string>{iss}, istream_iterator<string>{} };
-                // for (string &s : dataS) { _headerGLO.TimeCorr.push_back(stod(s)); }
-                // dataS.clear();
-                // continue;
                 size_t found_GLUT = line.find(sTokenGLUT);
                 if (found_GLUT != string::npos)
-                    _headerGLO.GLUT = headerHelperGPS(line);
+                    _headerGLO.GLUT = getTimeSysCorr(line);
                 continue;
             }
-            // Finding Leap Second
             if (found_LEAP != string::npos) {
-                line = line.substr(0, 7);
-                _headerGLO.leapSec = stod(line);
+                line = line.substr(0, 24);
+                istringstream iss(line);
+                copy(istream_iterator<int>(iss),
+                     istream_iterator<int>(),
+                     back_inserter(_headerGLO.leap_seconds));
                 continue;
             }
-            // Finding End of Header Info
             if (found_END != string::npos) {
                 break;
             }
@@ -278,16 +335,17 @@ void Rinex3Nav::readHead(std::ifstream& infile, SatelliteSystem sys){
     }
     case SatelliteSystem::BeiDou:{
         //iono
-        const string sTokenBDSA = "BDSA";//BDS alpha0 - alpha3
+        const string sTokenBDSA = "BDSA";//= BDS alpha0 - alpha3
         const string sTokenBDSB = "BDSB";//= BDS beta0 - beta3
         //time sys cores
-        const string sTokenBDUT = "GDUT";// =BDS - UTC (a0=A0UTC, a1=A1UTC )
+        const string sTokenBDUT = "GDUT";//= BDS - UTC (a0=A0UTC, a1=A1UTC )
 
         while (!infile.eof()) {
             line.clear();
 
             getline(infile, line, '\n');
 
+            size_t found_VER = line.find(sTokenVER);
             size_t found_PGM = line.find(sTokenPGM);
             size_t found_COM = line.find(sTokenCOM);
             size_t found_IONO = line.find(sTokenIONO);
@@ -295,11 +353,22 @@ void Rinex3Nav::readHead(std::ifstream& infile, SatelliteSystem sys){
             size_t found_LEAP = line.find(sTokenLEAP);
             size_t found_END = line.find(sTokenEND);
 
+
+            if (found_VER != string::npos) {
+                istringstream iss(line.substr(0, 60));
+                // Rinex type should be stored in 4th word of line
+                vector<string> words{ istream_iterator<string>{iss}, istream_iterator<string>{} };
+                _headerBEI.version = std::stod(words[0]);
+                _headerBEI.type = words[words.size() - 1];
+                words.clear();
+                continue;
+            }
             if(found_PGM != string::npos){
                 _headerBEI.pgm = getPMGHeader(line);
             }
             // Finding Comments, meaning skip!
             if (found_COM != string::npos){
+                _headerBEI.comments.push_back(line.substr(0, 60));
                 continue;
             }
             // Finding Ionophseric Constants as per new format
@@ -307,10 +376,10 @@ void Rinex3Nav::readHead(std::ifstream& infile, SatelliteSystem sys){
                 size_t found_DBSA = line.find(sTokenBDSA);
                 size_t found_DBSB = line.find(sTokenBDSB);
                 if (found_DBSA != string::npos) {
-                    _headerBEI.ialpha = headerHelperGPS(line);
+                    _headerBEI.ialpha = getIonCorr(line);
                 }
                 if (found_DBSB != string::npos) {
-                    _headerBEI.ibeta = headerHelperGPS(line);
+                    _headerBEI.ibeta = getIonCorr(line);
                 }
                 continue;
             }
@@ -318,12 +387,15 @@ void Rinex3Nav::readHead(std::ifstream& infile, SatelliteSystem sys){
             if (found_CORR != string::npos) {
                 size_t found_BDUT = line.find(sTokenBDUT);
                 if (found_BDUT != string::npos)
-                    _headerBEI.BDUT = headerHelperGPS(line);
+                    _headerBEI.BDUT = getTimeSysCorr(line);
                 continue;
             }
             if (found_LEAP != string::npos) {
-                line = line.substr(0, 7);
-                _headerBEI.leapSec = stod(line);
+                line = line.substr(0, 24);
+                istringstream iss(line);
+                copy(istream_iterator<int>(iss),
+                     istream_iterator<int>(),
+                     back_inserter(_headerBEI.leap_seconds));
                 continue;
             }
             // Finding End of Header Info
@@ -331,7 +403,6 @@ void Rinex3Nav::readHead(std::ifstream& infile, SatelliteSystem sys){
                 break;
             }
         }
-
         break;
     }
     case SatelliteSystem::Mixed:{
@@ -360,6 +431,7 @@ void Rinex3Nav::readHead(std::ifstream& infile, SatelliteSystem sys){
 
             getline(infile, line, '\n');
 
+            size_t found_VER = line.find(sTokenVER);
             size_t found_PGM = line.find(sTokenPGM);
             size_t found_COM = line.find(sTokenCOM);
             size_t found_IONO = line.find(sTokenIONO);
@@ -367,6 +439,24 @@ void Rinex3Nav::readHead(std::ifstream& infile, SatelliteSystem sys){
             size_t found_LEAP = line.find(sTokenLEAP);
             size_t found_END = line.find(sTokenEND);
 
+            if (found_VER != string::npos) {
+                istringstream iss(line.substr(0, 60));
+                // Rinex type should be stored in 4th word of line
+                vector<string> words{ istream_iterator<string>{iss}, istream_iterator<string>{} };
+                _headerGPS.version = std::stod(words[0]);
+                _headerGPS.type = words[words.size() - 1];
+
+                _headerGAL.version = std::stod(words[0]);
+                _headerGAL.type = words[words.size() - 1];
+
+                _headerGLO.version = std::stod(words[0]);
+                _headerGLO.type = words[words.size() - 1];
+
+                _headerBEI.version = std::stod(words[0]);
+                _headerBEI.type = words[words.size() - 1];
+                words.clear();
+                continue;
+            }
             if(found_PGM != string::npos){
                 _headerBEI.pgm = getPMGHeader(line);
                 _headerGPS.pgm = getPMGHeader(line);
@@ -375,6 +465,7 @@ void Rinex3Nav::readHead(std::ifstream& infile, SatelliteSystem sys){
             }
             // Finding Comments, meaning skip!
             if (found_COM != string::npos){
+                _headerGPS.comments.push_back(line.substr(0, 60));
                 continue;
             }
             // Finding Ionophseric Constants as per new format
@@ -386,23 +477,23 @@ void Rinex3Nav::readHead(std::ifstream& infile, SatelliteSystem sys){
                 size_t found_GPSB = line.find(sTokenGPSB);
 
                 if (found_GPSA != string::npos) {
-                    _headerGPS.ialpha = headerHelperGPS(line);
+                    _headerGPS.ialpha = getIonCorr(line);
                     continue;
                 }
                 if (found_GPSB != string::npos) {
-                    _headerGPS.ibeta = headerHelperGPS(line);
+                    _headerGPS.ibeta = getIonCorr(line);
                     continue;
                 }
                 if (found_GAL != string::npos) {
-                    _headerGAL.gal = headerHelperGPS(line);
+                    _headerGAL.gal = getIonCorr(line);
                     continue;
                 }
                 if (found_DBSA != string::npos) {
-                    _headerBEI.ialpha = headerHelperGPS(line);
+                    _headerBEI.ialpha = getIonCorr(line);
                     continue;
                 }
                 if (found_DBSB != string::npos) {
-                    _headerBEI.ibeta = headerHelperGPS(line);
+                    _headerBEI.ibeta = getIonCorr(line);
                     continue;
                 }
             }
@@ -413,21 +504,24 @@ void Rinex3Nav::readHead(std::ifstream& infile, SatelliteSystem sys){
                 size_t found_GAUT = line.find(sTokenGAUT);
                 size_t found_GPUT = line.find(sTokenGPUT);
                 if (found_GPUT != string::npos)
-                    _headerGPS.GPUT = headerHelperGPS(line);
+                    _headerGPS.GPUT = getTimeSysCorr(line);
                 if (found_GAUT != string::npos)
-                    _headerGAL.GAUT = headerHelperGPS(line);
+                    _headerGAL.GAUT = getTimeSysCorr(line);
                 if (found_BDUT != string::npos)
-                    _headerBEI.BDUT = headerHelperGPS(line);
+                    _headerBEI.BDUT = getTimeSysCorr(line);
                 if (found_GLUT != string::npos)
-                    _headerGLO.GLUT = headerHelperGPS(line);
+                    _headerGLO.GLUT = getTimeSysCorr(line);
                 continue;
             }
             if (found_LEAP != string::npos) {
-                line = line.substr(0, 7);
-                _headerBEI.leapSec = stod(line);
-                _headerGPS.leapSec = stod(line);
-                _headerGLO.leapSec = stod(line);
-                _headerGAL.leapSec = stod(line);
+                line = line.substr(0, 24);
+                istringstream iss(line);
+                copy(istream_iterator<int>(iss),
+                     istream_iterator<int>(),
+                     back_inserter(_headerGPS.leap_seconds));
+                _headerBEI.leap_seconds = _headerGPS.leap_seconds;
+                _headerGLO.leap_seconds = _headerGPS.leap_seconds;
+                _headerGAL.leap_seconds = _headerGPS.leap_seconds;
                 continue;
             }
             // Finding End of Header Info
@@ -457,6 +551,8 @@ std::vector<string> Rinex3Nav::getPMGHeader(std::string line)
     }
     return data;
 }
+
+
 
 //==================================GPS==================================================
 // Navigation Body Organizer for GPS Navigation File
@@ -752,6 +848,15 @@ void Rinex3Nav::readMixed(std::ifstream& infile) {
 
     readHead(infile, SatelliteSystem::Mixed);
     readBody(infile, SatelliteSystem::Mixed);
+
+    if(_navGPS.empty())
+        _headerGPS.clear();
+    if(_navGAL.empty())
+        _headerGAL.clear();
+    if(_navGLO.empty())
+        _headerGLO.clear();
+    if(_navBEI.empty())
+        _headerBEI.clear();
 }
 
 
@@ -1076,34 +1181,82 @@ ViewNav::ViewNav(const Rinex3Nav &other)
 //======================================================================================
 void Rinex3Nav::HeaderGPS::clear()
 {
-    GPUT.clear();
+    type.clear();
+    version = 0;
+
+    pgm.clear();
+    comments.clear();
+
     ialpha.clear();
     ibeta.clear();
-    leapSec = 0;
-    pgm.clear();
+
+    GPUT.clear();
+    leap_seconds.clear();
+
 }
 
 void Rinex3Nav::HeaderGLO::clear()
 {
-    GLUT.clear();
-    leapSec = 0;
+    type.clear();
+    version = 0;
+
     pgm.clear();
+    comments.clear();
+
+    GLUT.clear();
+    leap_seconds.clear();
 }
 
 void Rinex3Nav::HeaderGAL::clear()
 {
-    GAUT.clear();
-    gal.clear();
+    type.clear();
+    version = 0;
+
     pgm.clear();
-    leapSec = 0;
+    comments.clear();
+
+    gal.clear();
+
+    GAUT.clear();
+    leap_seconds.clear();
 }
 
 void Rinex3Nav::HeaderBEI::clear()
 {
-    BDUT.clear();
-    leapSec = 0;
+    type.clear();
+    version = 0;
+
+    pgm.clear();
+    comments.clear();
+
     ialpha.clear();
     ibeta.clear();
-    pgm.clear();
+
+    BDUT.clear();
+    leap_seconds.clear();
 }
 //======================================================================================
+
+void Rinex3Nav::TimeSysCorr::clear()
+{
+    this->type.clear();
+    a0_coef = 0;
+    a1_coef = 0;
+    ref_time = 0;
+    week_number = 0;
+    if(source.has_value())
+        source = nullopt;
+    if(utc_id.has_value())
+        utc_id = nullopt;
+
+}
+
+void Rinex3Nav::IonCorr::clear()
+{
+    type.clear();
+    params.clear();
+    if(time_mark.has_value())
+        time_mark = nullopt;
+    if(sv_id.has_value())
+        sv_id = nullopt;
+}

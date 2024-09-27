@@ -30,24 +30,24 @@ public:
     void nextNav();                                     // read in order, one by one
     bool readNav(QString path);                         // read anv file by path
     void readNav(int index);                            // read anv file by index
-    ViewNav getNav() const;                           // give all data from nav file
+    ViewNav getNav() const;                             // give all data from nav file
 
     void clearObs();
     void clearRRNav();
     void clearNavData();
 
     //Getter
-    QString getPath_obs() const;
-    QString getCurr_path_nav() const;
-    QStringList getPaths_nav() const;
-    double getRinex_version_obs() const;
-    double getRinex_version_nav() const;
-    int getRinex_type_obs() const;
-    int getRinex_type_nav() const;
+    const QString& getPathObs() const;
+    const QString& getCurrPathNav() const;
+    const QStringList& getPathsNav() const;
+    const double& getRinexVersionObs() const;
+    const double& getRinexVersionNav() const;
+    const int& getRinexTypeObs() const;
+    const int& getRinexTypeNav() const;
 
     //Setter
-    void setPath_obs(QString newPath_obs);
-    void setPaths_nav(const QStringList &newPaths_nav);
+    void setPathObs(QString newPath_obs);
+    void setPathsNav(const QStringList &newPaths_nav);
 
     void addPath_nav(QString path);
 

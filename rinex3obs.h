@@ -20,6 +20,8 @@ public:
             std::string sat_system;
             int scale;
             std::vector<std::string> types;
+
+            void clear();
         };
 
         struct PhaseShifts
@@ -27,6 +29,8 @@ public:
             std::string code;
             std::optional<double> shift_correction;
             std::optional<std::vector<std::string>> sats;
+
+            void clear();
         };
 
         double version;
@@ -35,8 +39,8 @@ public:
         std::vector<std::string> comments;
 
         std::string marker_name = "";
-        std::string marker_num = "";
-        std::string marker_type = "";
+        std::optional<std::string> marker_num;
+        std::string marker_type = "GEODETIC/NON_GEODETIC";
 
         std::vector<std::string> obs_agency;
         std::vector<std::string> rec_type_vers;
@@ -47,26 +51,24 @@ public:
         std::vector<double> ant_delta_xyz;
         std::map<std::string, std::map<std::string, std::vector<double>>> ant_phasecenter;
         std::vector<double> ant_sight_xyz;
-        double ant_zerodir_azi;
+        std::optional<double> ant_zerodir_azi;
         std::vector<double> ant_zerodir_xyz;
 
         std::vector<double> center_of_mass_xyz;
-        std::string sig_str_unit;
-        double interval;
+         std::map<std::string, std::vector<std::string>> obsTypes;
+        std::optional<std::string> sig_str_unit;
+        std::optional<double> interval;
         std::vector<double> first_obs_time;
         std::vector<double> last_obs_time;
         int rcv_clock = 0;
         std::vector<std::string> dcbs_appl;
         std::vector<std::string> pcvs_appl;
         std::vector<ScaleFactor> scale_factor;
-        std::map<std::string, PhaseShifts> phase_shifts;
+        std::map<std::string, std::vector<PhaseShifts>> phase_shifts;
 
         std::map<std::string, int> glonass_slot;
         std::map<std::string, double> glonass_cpd;
         std::vector<int> leap_seconds;
-
-
-        std::map<std::string, std::vector<std::string>> obsTypes;
     };
     // To store observations in an epoch
     struct ObsEpochInfo {
@@ -108,7 +110,7 @@ public:
 
 private:
     std::vector<Rinex3Obs::ObsHeaderInfo::ScaleFactor> obsScaleFactorHeader(std::vector<std::string> block);
-    std::map<std::string, Rinex3Obs::ObsHeaderInfo::PhaseShifts> obsPhaseShiftsHeader(std::vector<std::string> block);
+    std::map<std::string, std::vector<Rinex3Obs::ObsHeaderInfo::PhaseShifts>> obsPhaseShiftsHeader(std::vector<std::string> block);
 };
 
 #endif // RINEX3OBS_H
