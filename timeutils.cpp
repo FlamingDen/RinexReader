@@ -21,13 +21,21 @@ double gpsTime(std::vector<double> epochInfo) {
     // UTC time in hours
     double UTC = hr + min / 60. + sec / 3600.;
     // Taking care of month and year conditioning
-    if (m > 2) {
-        y = y + 2000;
+    if(y < 1900 ){
+        if (m > 2) {
+            y = y + 2000;
+        }
+        else {
+            y = y + 2000 - 1;
+            m = m + 12;
+        }
+    } else {
+        if(m <= 2 ){
+            y--;
+            m = m + 12;
+        }
     }
-    else {
-        y = y + 2000 - 1;
-        m = m + 12;
-    }
+
     // Julian Date
     double jDate = floor(365.25*y) + floor(30.6001*(m + 1)) + d + (UTC / 24) + 1720981.5;
     // GPS Week

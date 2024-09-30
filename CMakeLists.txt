@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.14)
 
-project(rinexParserForDB LANGUAGES CXX)
+project(RinexReader LANGUAGES CXX)
 
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 set(CMAKE_AUTOUIC ON)
@@ -13,7 +13,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 find_package(QT NAMES Qt5 Qt5 REQUIRED COMPONENTS Core Sql)
 find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Core Sql)
 
-add_executable(rinexParserForDB
+add_executable(RinexReader
     csvcreator.cpp
     facadedb.cpp
     fileio.cpp
@@ -24,6 +24,10 @@ add_executable(rinexParserForDB
     rinexreader.cpp
     stringutils.cpp
     timeutils.cpp
+    enumtypes.cpp
+    rinexnamegenerator.cpp
+    rinexnamegenerator.h
+    enumtypes.h
     csvcreator.h
     facadedb.h
     fileio.h
@@ -35,6 +39,6 @@ add_executable(rinexParserForDB
     timeutils.h
 )
 
-target_link_libraries(rinexParserForDB PRIVATE Qt${QT_VERSION_MAJOR}::Core Qt${QT_VERSION_MAJOR}::Sql)
+target_link_libraries(RinexReader PRIVATE Qt${QT_VERSION_MAJOR}::Core Qt${QT_VERSION_MAJOR}::Sql)
 
-target_compile_definitions(rinexParserForDB PRIVATE $<$<OR:$<CONFIG:Debug>,$<CONFIG:RelWithDebInfo>>:QT_QML_DEBUG>)
+target_compile_definitions(RinexReader PRIVATE $<$<OR:$<CONFIG:Debug>,$<CONFIG:RelWithDebInfo>>:QT_QML_DEBUG>)

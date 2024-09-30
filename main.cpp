@@ -54,7 +54,7 @@ int main(int argc, char *argv[])
 
     //rr.saveAsCSV(pathCSVobs, RinexType::OBSERVATION);
     //rr.saveAsCSV(pathCSVnav, RinexType::NAVIGATION);
-    //==============================================================================*/
+    //==============================================================================
 }
 
 void uploadDatatoDB(FacadeDB* db, RinexReader &rr){

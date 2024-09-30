@@ -27,6 +27,7 @@ CSVobs::CSVobs(const QList<Rinex3Obs::ObsEpochInfo> &epochs, QString sep) : CSVC
 
 CSVobs::~CSVobs() {}
 
+
 void CSVobs::createCSV(QString pathToSave)
 {
     std::ofstream out(pathToSave.toStdString());

@@ -40,8 +40,8 @@ RinexReader::~RinexReader()
 
 RinexReader::RinexReader(const RinexReader &other) : RinexReader(other.getPathObs(),other.getPathsNav()){
     close();
-    this->setPath_obs(other.path_obs);
-    this->setPaths_nav(other.paths_nav);
+    this->setPathObs(other.path_obs);
+    this->setPathsNav(other.paths_nav);
     nav_counter = other.nav_counter;
     this->obs = other.obs;
     this->nav = other.nav;
@@ -51,8 +51,8 @@ RinexReader &RinexReader::operator=(const RinexReader &other)
 {
     if (this != &other){
         close();
-        this->setPath_obs(other.path_obs);
-        this->setPaths_nav(other.paths_nav);
+        this->setPathObs(other.path_obs);
+        this->setPathsNav(other.paths_nav);
         nav_counter = other.nav_counter;
         this->obs = other.obs;
         this->nav = other.nav;
@@ -298,7 +298,7 @@ void RinexReader::addPath_nav(QString path)
         paths_nav.append(path);
 }
 
-QString RinexReader::getCurr_path_nav() const
+const QString& RinexReader::getCurrPathNav() const
 {
     return curr_path_nav;
 }
