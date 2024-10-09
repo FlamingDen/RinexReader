@@ -43,7 +43,7 @@ void FileIO::fileSafeOut(string output_filename, ofstream& fout) {
 }
 
 // Check Rinex File Version
-void FileIO::checkRinexVersionType(double &rinex_version, int &rinex_type, std::ifstream &fin)
+void FileIO::checkRinexVersionType(double &rinex_version, std::string &type_file, int &rinex_type, std::ifstream &fin)
 {
     const std::string sTokenVER = "RINEX VERSION / TYPE";
     std::string line; int nLines = 0;
@@ -54,7 +54,7 @@ void FileIO::checkRinexVersionType(double &rinex_version, int &rinex_type, std::
         size_t found_VER = line.find(sTokenVER);
         // RINEX Version
         if (found_VER != std::string::npos) {
-            std::istringstream iss(line);
+            std::istringstream iss(line.substr(0,60));
             std::vector<std::string> words{ std::istream_iterator<std::string>{iss}, std::istream_iterator<std::string>{} };
             // Rinex Version
             if ((std::stod(words[0])) >= 3) {
@@ -66,8 +66,10 @@ void FileIO::checkRinexVersionType(double &rinex_version, int &rinex_type, std::
             else {
                 rinex_version = NULL;
             }
+            // Type of file
+            type_file = words[1][0];
             // Rinex Type
-            std::string type = words[words.size() - 6].substr(0, 1);
+            std::string type = words[words.size() - 2].substr(0, 1);
             rinex_type = 0;
             if (type == "G") {
                 rinex_type = 1;

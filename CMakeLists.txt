@@ -37,6 +37,7 @@ add_executable(RinexReader
     rinexreader.h
     stringutils.h
     timeutils.h
+    ireading.h ireading.cpp
 )
 
 target_link_libraries(RinexReader PRIVATE Qt${QT_VERSION_MAJOR}::Core Qt${QT_VERSION_MAJOR}::Sql)

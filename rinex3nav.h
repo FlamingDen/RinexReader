@@ -4,12 +4,13 @@
 #include "stringutils.h"
 #include <optional>
 #include "enumtypes.h"
+#include "ireading.h"
 
 #ifndef RINEX3NAV_H_
 #define RINEX3NAV_H_
 
 //TO DO BEIDOU
-class Rinex3Nav
+class Rinex3Nav : IReading
 {
 public:
     Rinex3Nav();
@@ -222,7 +223,7 @@ public:
         std::vector<std::optional<double>> toVec();
     };
 
-    // struct for halping to store info about "time system correction"
+    // struct for helping to store info about "TIME SYSTEM CORR"
     struct TimeSysCorr
     {
         std::string type;
@@ -236,6 +237,7 @@ public:
         void clear();
     };
 
+    // struct for helping to store info about "IONOSPHERIC CORR"
     struct IonCorr{
         std::string type;
         std::vector<double> params;
@@ -341,11 +343,13 @@ public:
     void clear();
 
 private:
-    void readHead(std::ifstream& infile, SatelliteSystem sys);
+    SatelliteSystem curr_sys;
+
+    void readHead(std::ifstream& infile) override;
     std::vector<std::string> getPMGHeader(std::string line);
     TimeSysCorr getTimeSysCorr(std::string line);
 
-    void readBody(std::ifstream& infile, SatelliteSystem sys);
+    void readBody(std::ifstream& infile) override;
     void saveBlock(std::vector<std::string>& block, SatelliteSystem sys, std::string ID = "");
 };
 

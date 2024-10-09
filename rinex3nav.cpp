@@ -129,7 +129,7 @@ int Rinex3Nav::EpochMatcher(double obsTime, std::vector<Rinex3Nav::DataBEI> NAV)
 }
 //=======================================================================================
 
-void Rinex3Nav::readHead(std::ifstream& infile, SatelliteSystem sys){
+void Rinex3Nav::readHead(std::ifstream& infile){
     //common tokens
     const string sTokenVER = "RINEX VERSION / TYPE";
     const string sTokenPGM = "PGM / RUN BY / DATE";
@@ -141,7 +141,7 @@ void Rinex3Nav::readHead(std::ifstream& infile, SatelliteSystem sys){
 
     string line;
 
-    switch (sys) {
+    switch (curr_sys) {
     case SatelliteSystem::GPS:{
         //iono
         const string sTokenGPSA = "GPSA";//= GPS alpha0 - alpha3
@@ -623,11 +623,13 @@ Rinex3Nav::DataGPS epochNavOrganizerGPS(vector<string> block) {
 
 // Reader for GPS navigation file
 void Rinex3Nav::readGPS(std::ifstream& infile) {
+    curr_sys = SatelliteSystem::GPS;
     _headerGPS.clear();
-    readHead(infile, SatelliteSystem::GPS);
+    readHead(infile);
 
     _navGPS.clear();
-    readBody(infile, SatelliteSystem::GPS);
+    readBody(infile);
+    curr_sys = SatelliteSystem::None;
 }
 //=======================================================================================
 
@@ -678,11 +680,13 @@ Rinex3Nav::DataGLO epochNavOrganizerGLO(vector<string> block) {
 // Reader for Glonass navigation file
 // Parameters are in ECEF Greenwich coordinate system PZ - 90
 void Rinex3Nav::readGLO(std::ifstream& infile) {
+    curr_sys = SatelliteSystem::Glonass;
     _headerGLO.clear();
-    readHead(infile, SatelliteSystem::Glonass);
+    readHead(infile);
 
     _navGLO.clear();
-    readBody(infile, SatelliteSystem::Glonass);
+    readBody(infile);
+    curr_sys = SatelliteSystem::None;
 }
 //=======================================================================================
 
@@ -756,11 +760,13 @@ Rinex3Nav::DataGAL epochNavOrganizerGAL(vector<string> block) {
 
 // Reader for Galileo navigation file
 void Rinex3Nav::readGAL(std::ifstream& infile) {
+    curr_sys = SatelliteSystem::Galileo;
     _headerGAL.clear();
-    readHead(infile, SatelliteSystem::Galileo);
+    readHead(infile);
 
     _navGAL.clear();
-    readBody(infile, SatelliteSystem::Galileo);
+    readBody(infile);
+    curr_sys = SatelliteSystem::None;
 }
 //=======================================================================================
 
@@ -834,20 +840,23 @@ Rinex3Nav::DataBEI epochNavOrganizerBEI(vector<string> block) {
 
 void Rinex3Nav::readBEI(std::ifstream& infile)
 {
+    curr_sys = SatelliteSystem::BeiDou;
     _headerBEI.clear();
-    readHead(infile, SatelliteSystem::BeiDou);
+    readHead(infile);
 
     _navBEI.clear();
-    readBody(infile, SatelliteSystem::BeiDou);
+    readBody(infile);
+    curr_sys = SatelliteSystem::None;
 }
 //=======================================================================================
 
 // Reader for GPS navigation file
 void Rinex3Nav::readMixed(std::ifstream& infile) {
+    curr_sys = SatelliteSystem::Mixed;
     clear();
 
-    readHead(infile, SatelliteSystem::Mixed);
-    readBody(infile, SatelliteSystem::Mixed);
+    readHead(infile);
+    readBody(infile);
 
     if(_navGPS.empty())
         _headerGPS.clear();
@@ -857,6 +866,7 @@ void Rinex3Nav::readMixed(std::ifstream& infile) {
         _headerGLO.clear();
     if(_navBEI.empty())
         _headerBEI.clear();
+    curr_sys = SatelliteSystem::None;
 }
 
 
@@ -874,12 +884,12 @@ void Rinex3Nav::clear()
 }
 
 
-void Rinex3Nav::readBody(ifstream& infile, SatelliteSystem sys)
+void Rinex3Nav::readBody(ifstream& infile)
 {
     vector<string> block;
     string line;
     int nlines = 0;
-    int size = (sys == SatelliteSystem::Glonass ? 4 : 8);
+    int size = (curr_sys == SatelliteSystem::Glonass ? 4 : 8);
     // Reading Navigation Data Body
     while (!infile.eof()) {
         line.clear();
@@ -891,7 +901,7 @@ void Rinex3Nav::readBody(ifstream& infile, SatelliteSystem sys)
         if (nlines != 1){
             line = line.substr(4, line.length());
         }
-        if (nlines == 1 && sys == SatelliteSystem::Mixed){
+        if (nlines == 1 && curr_sys == SatelliteSystem::Mixed){
             ID = line.substr(0, 1);
             ID == "G" ? size = 4 : size = 8;
         }
@@ -899,7 +909,7 @@ void Rinex3Nav::readBody(ifstream& infile, SatelliteSystem sys)
         block.push_back(line);
         // New block of navigation message
         if (nlines == size) {
-            saveBlock(block, sys, ID);
+            saveBlock(block, curr_sys, ID);
 
             block.clear();
             nlines = 0;

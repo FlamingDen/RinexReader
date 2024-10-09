@@ -10,14 +10,14 @@
 class CSVCreator
 {
 public:
-    CSVCreator(QString sep);
-    ~CSVCreator();
-
     virtual void createCSV(QString pathToSave) = 0;
 
     QString getSep() const;
     void setSep(QString newSep);
 protected:
+    CSVCreator(QString sep);
+    virtual ~CSVCreator() = 0;
+
     QString sep;
 };
 //========================================================================

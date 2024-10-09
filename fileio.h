@@ -11,7 +11,7 @@ public:
     // Function Declarations
     void fileSafeIn(std::string filename, std::ifstream& fin);
     void fileSafeOut(std::string filename, std::ofstream& fout);
-    void checkRinexVersionType(double &version, int &type, std::ifstream &fin);
+    void checkRinexVersionType(double &version, std::string &type_file, int &type, std::ifstream &fin);
     void logger(std::string output_filename, std::string input_filename, std::ofstream& fout);
 };
 

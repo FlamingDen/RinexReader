@@ -35,7 +35,7 @@ int main(int argc, char *argv[])
     RinexReader rr(pathObs,navPaths);
     Rinex3Obs::ObsHeaderInfo headObs = rr.getObsHeaderInfo();
 
-    QList<Rinex3Obs::ObsEpochInfo> inf = rr.getEpochs();
+    //QList<Rinex3Obs::ObsEpochInfo> inf = rr.getEpochs();
     ViewNav viewNav;
 
     rr.nextNav();
@@ -47,10 +47,6 @@ int main(int argc, char *argv[])
     rr.clearNavData();
     rr.nextNav();
     viewNav = rr.getNav();
-
-    rr.readNav(0);
-    rr.readNav(navGPS);
-
 
     //rr.saveAsCSV(pathCSVobs, RinexType::OBSERVATION);
     //rr.saveAsCSV(pathCSVnav, RinexType::NAVIGATION);

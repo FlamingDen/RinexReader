@@ -188,7 +188,7 @@ std::map<string, std::vector<Rinex3Obs::ObsHeaderInfo::PhaseShifts>> Rinex3Obs::
 }
 
 // Extracts and stores the header information from Rinex v3 File
-void Rinex3Obs::obsHeader(ifstream& infile) {
+void Rinex3Obs::readHead(ifstream& infile) {
     // String tokens to look for
     const string sTokenVER = "RINEX VERSION / TYPE";
     const string sTokenPGM = "PGM / RUN BY / DATE";
@@ -635,7 +635,7 @@ void Rinex3Obs::setObservations(map<string, map<int, vector<double>>> observatio
 }
 
 // This function extracts and stores epochwise observations from file
-bool Rinex3Obs::obsEpoch(ifstream& infile) {
+void Rinex3Obs::readBody(ifstream& infile) {
     // Rinex v3 special identifier for new epoch of observations
     const string sTokenEpoch = ">";
     const string sTokenSAT = "OF SATELLITES";
@@ -661,7 +661,6 @@ bool Rinex3Obs::obsEpoch(ifstream& infile) {
         if ( found_SAT != string::npos ){
             infile.clear();
             infile.seekg(0,infile.end);
-            return false;
         }
 
         // Look for special identifier in line
@@ -692,7 +691,6 @@ bool Rinex3Obs::obsEpoch(ifstream& infile) {
     _EpochObs.gpsTime = gpsTime(_EpochObs.epochRecord);
     // Update observation attributes
     //setObservations(_EpochObs.observations);
-    return true;
 }
 //=======================================================================================
 

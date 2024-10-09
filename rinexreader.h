@@ -13,9 +13,9 @@ class RinexReader
 {
 public:
     RinexReader();
-    RinexReader(QString path, RinexType type);
+    RinexReader(QString path);
     RinexReader(QString path_obs,QString path_nav);
-    RinexReader(QStringList paths_nav, RinexType type = RinexType::NAVIGATION);
+    RinexReader(QStringList paths_nav);
     RinexReader(QString path_obs, QStringList paths_nav);
     ~RinexReader();
 
@@ -65,6 +65,7 @@ private:
     std::ifstream fin_obs;
     std::ifstream fin_nav;
     int nav_counter;
+    QString curr_rin_type;
 
     QVector<QString> satellites;
     QList<Rinex3Obs::ObsEpochInfo> epochs;
@@ -72,7 +73,7 @@ private:
     bool readObsHeader();                                   //read a header and Set position stream on beginning
 
     void close();
-    void init(QString path, RinexType type);                //open stream for file(path) and add to field if not contains
+    void init(QString path);                //open stream for file(path) and add to field if not contains
     bool checkVersion(RinexType type);
 };
 

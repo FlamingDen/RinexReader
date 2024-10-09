@@ -3,10 +3,12 @@
 #include "pch.h"
 #include <optional>
 
+#include "ireading.h"
+
 #ifndef RINEX3OBS_H_
 #define RINEX3OBS_H_
 
-class Rinex3Obs
+class Rinex3Obs : IReading
 {
 public:
     Rinex3Obs();
@@ -101,8 +103,9 @@ public:
     std::vector<std::string> _obsTypesBEI;
 
     // Functions
-    void obsHeader(std::ifstream& infile);
-    bool obsEpoch(std::ifstream& infile);
+    void readHead(std::ifstream& infile) override;
+    void readBody(std::ifstream& infile) override;
+
     void clear(Rinex3Obs::ObsEpochInfo& obs);
     void clear(Rinex3Obs::ObsHeaderInfo& header);
     void setObservations(std::map<std::string, std::map<int, std::vector<double>>> observations);
