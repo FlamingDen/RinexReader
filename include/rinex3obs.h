@@ -1,13 +1,11 @@
 #pragma once
+#ifndef RINEX3OBS_H_
+#define RINEX3OBS_H_
 
 #include "pch.h"
 #include <optional>
 
 #include "ireading.h"
-
-#ifndef RINEX3OBS_H_
-#define RINEX3OBS_H_
-
 class Rinex3Obs : IReading
 {
 public:
@@ -16,9 +14,11 @@ public:
 
     // DATA STRUCTURES
     // To store important header information
-    struct ObsHeaderInfo {
+    struct ObsHeaderInfo
+    {
 
-        struct ScaleFactor{
+        struct ScaleFactor
+        {
             std::string sat_system;
             int scale;
             std::vector<std::string> types;
@@ -57,7 +57,7 @@ public:
         std::vector<double> ant_zerodir_xyz;
 
         std::vector<double> center_of_mass_xyz;
-         std::map<std::string, std::vector<std::string>> obsTypes;
+        std::map<std::string, std::vector<std::string>> obsTypes;
         std::optional<std::string> sig_str_unit;
         std::optional<double> interval;
         std::vector<double> first_obs_time;
@@ -73,7 +73,8 @@ public:
         std::vector<int> leap_seconds;
     };
     // To store observations in an epoch
-    struct ObsEpochInfo {
+    struct ObsEpochInfo
+    {
         std::vector<double> epochRecord;
         std::optional<double> recClockOffset;
         double gpsTime;
@@ -103,11 +104,11 @@ public:
     std::vector<std::string> _obsTypesBEI;
 
     // Functions
-    void readHead(std::ifstream& infile) override;
-    void readBody(std::ifstream& infile) override;
+    void readHead(std::ifstream &infile) override;
+    void readBody(std::ifstream &infile) override;
 
-    void clear(Rinex3Obs::ObsEpochInfo& obs);
-    void clear(Rinex3Obs::ObsHeaderInfo& header);
+    void clear(Rinex3Obs::ObsEpochInfo &obs);
+    void clear(Rinex3Obs::ObsHeaderInfo &header);
     void setObservations(std::map<std::string, std::map<int, std::vector<double>>> observations);
     std::map<int, double> specificObsMapper(std::map<int, std::vector<double>> obsGPS, std::vector<std::string> obsTypes, std::string specificObs);
 

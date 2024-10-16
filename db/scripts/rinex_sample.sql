@@ -1,3 +1,6 @@
+-- скрипт для создания проверосчной бд для facadeDB
+-- и проверки ее выгрзки и чтения rinex файлов в БД
+
 create extension timescaledb;
 --create extension postgis;
 

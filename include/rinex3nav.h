@@ -1,13 +1,13 @@
 #pragma once
 
+#ifndef RINEX3NAV_H_
+#define RINEX3NAV_H_
+
 #include "timeutils.h"
 #include "stringutils.h"
 #include <optional>
 #include "enumtypes.h"
 #include "ireading.h"
-
-#ifndef RINEX3NAV_H_
-#define RINEX3NAV_H_
 
 //TO DO BEIDOU
 class Rinex3Nav : IReading

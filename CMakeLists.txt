@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.14)
 
-project(RinexTest LANGUAGES CXX)
+project(RinexReader LANGUAGES CXX)
 
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 set(CMAKE_AUTOUIC ON)
@@ -13,11 +13,13 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 find_package(QT NAMES Qt5 Qt5 REQUIRED COMPONENTS Core Sql)
 find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Core Sql)
 
+add_subdirectory(test)
+add_subdirectory(db)
+
 ################################################################################################################
 #--------------------------------------------------------------------------------------------------------------#
 add_library(RinexReader
     src/csvcreator.cpp
-    src/facadedb.cpp
     src/fileio.cpp
     src/pch.cpp
     src/rinex3nav.cpp
@@ -32,7 +34,6 @@ add_library(RinexReader
     include/rinexnamegenerator.h
     include/enumtypes.h
     include/csvcreator.h
-    include/facadedb.h
     include/fileio.h
     include/pch.h
     include/rinex3nav.h
@@ -59,9 +60,4 @@ target_compile_definitions(RinexReader PRIVATE $<$<OR:$<CONFIG:Debug>,$<CONFIG:R
 #--------------------------------------------------------------------------------------------------------------#
 ################################################################################################################
 
-add_executable(RinexTest
-    test/main.cpp
-    other/runex_sample.sql
-)
 
-target_link_libraries(RinexTest PRIVATE Qt${QT_VERSION_MAJOR}::Core Qt${QT_VERSION_MAJOR}::Sql RinexReader)
