@@ -2,7 +2,9 @@
 #include <QtSql>
 #include <QTextStream>
 
+#include "rinexnamegenerator.h"
 #include "rinexreader.h"
+#include <regex>
 
 
 int main(int argc, char *argv[])
@@ -44,6 +46,11 @@ int main(int argc, char *argv[])
     rr.clearNavData();
     rr.nextNav();
     viewNav = rr.getNav();
+
+
+    RinexNameGenerator qwe;
+    qwe.generateUrl(IdPDP::KLEC, "24/1/2023 12:00:00");
+
 
     //rr.saveAsCSV(pathCSVobs, RinexType::OBSERVATION);
     //rr.saveAsCSV(pathCSVnav, RinexType::NAVIGATION);
