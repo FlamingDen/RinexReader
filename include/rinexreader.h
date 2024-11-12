@@ -9,6 +9,7 @@
 #include "fileio.h"
 
 
+namespace rr {
 class RinexReader
 {
 public:
@@ -76,5 +77,5 @@ private:
     void init(QString path);                //open stream for file(path) and add to field if not contains
     bool checkVersion(RinexType type);
 };
-
+}
 #endif // RINEXREADER_H

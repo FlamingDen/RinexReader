@@ -5,30 +5,30 @@
 
 
 
-CSVCreator::CSVCreator(QString sep): sep(sep){}
+rr::CSVCreator::CSVCreator(QString sep): sep(sep){}
 
-CSVCreator::~CSVCreator(){}
+rr::CSVCreator::~CSVCreator(){}
 
-QString CSVCreator::getSep() const
+QString rr::CSVCreator::getSep() const
 {
     return sep;
 }
 
-void CSVCreator::setSep(QString newSep)
+void rr::CSVCreator::setSep(QString newSep)
 {
     sep = newSep;
 }
 
 
 
-CSVobs::CSVobs(const QList<Rinex3Obs::ObsEpochInfo> &epochs) : CSVobs(epochs,",") {}
+rr::CSVobs::CSVobs(const QList<Rinex3Obs::ObsEpochInfo> &epochs) : CSVobs(epochs,",") {}
 
-CSVobs::CSVobs(const QList<Rinex3Obs::ObsEpochInfo> &epochs, QString sep) : CSVCreator(sep), epochs(epochs){}
+rr::CSVobs::CSVobs(const QList<Rinex3Obs::ObsEpochInfo> &epochs, QString sep) : CSVCreator(sep), epochs(epochs){}
 
-CSVobs::~CSVobs() {}
+rr::CSVobs::~CSVobs() {}
 
 
-void CSVobs::createCSV(QString pathToSave)
+void rr::CSVobs::createCSV(QString pathToSave)
 {
     std::ofstream out(pathToSave.toStdString());
     if(out.is_open() && !out.bad()){
@@ -65,11 +65,11 @@ void CSVobs::createCSV(QString pathToSave)
 
 
 
-CSVnav::CSVnav(const Rinex3Nav &nav) : CSVnav(nav,","){}
+rr::CSVnav::CSVnav(const Rinex3Nav &nav) : CSVnav(nav,","){}
 
-CSVnav::CSVnav(const Rinex3Nav &nav, QString sep): CSVCreator(sep), nav(nav){}
+rr::CSVnav::CSVnav(const Rinex3Nav &nav, QString sep): CSVCreator(sep), nav(nav){}
 
-CSVnav::~CSVnav(){}
+rr::CSVnav::~CSVnav(){}
 
 template<typename T>
 void createCSVHelperNav(std::map<int, std::vector<T>> _nav, std::ofstream& out, QString sep){
@@ -79,7 +79,7 @@ void createCSVHelperNav(std::map<int, std::vector<T>> _nav, std::ofstream& out, 
         typename std::vector<T>::iterator satIt = it->second.begin();
         for(satIt = it->second.begin(); satIt != it->second.end(); satIt++){
             //prn
-            QString prn = getSatelliteSystemShort(satIt->SatelliteSystem) + QString("%1").arg(satIt->PRN,2,10,QChar('0'));
+            QString prn = rr::getSatelliteSystemShort(satIt->SatelliteSystem) + QString("%1").arg(satIt->PRN,2,10,QChar('0'));
             //datetime
             std::vector<double> time = satIt->epochInfo;
             QDateTime dt(QDate(time.at(0),time.at(1),time.at(2)),QTime(time.at(3),time.at(4),time.at(5)));
@@ -100,7 +100,7 @@ void createCSVHelperNav(std::map<int, std::vector<T>> _nav, std::ofstream& out, 
     }
 }
 
-void CSVnav::createCSV(QString pathToSave)
+void rr::CSVnav::createCSV(QString pathToSave)
 {
     std::ofstream out(pathToSave.toStdString());
     if(out.is_open() && !out.bad()){

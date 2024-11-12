@@ -3,14 +3,14 @@
 
 using namespace std;
 
-Rinex3Nav::Rinex3Nav() {}
+rr::Rinex3Nav::Rinex3Nav() {}
 
-Rinex3Nav::~Rinex3Nav() {}
+rr::Rinex3Nav::~Rinex3Nav() {}
 
 // A function to help with organizing headers
 // Works for the alpha/beta ionospheric constants and time correction
-Rinex3Nav::IonCorr getIonCorr(string line) {
-    Rinex3Nav::IonCorr ic;
+rr::Rinex3Nav::IonCorr getIonCorr(string line) {
+    rr::Rinex3Nav::IonCorr ic;
     ic.type = line.substr(0,4);
     string temp_str;
     for (unsigned i = 5; i < 53; i += 12) {
@@ -29,7 +29,7 @@ Rinex3Nav::IonCorr getIonCorr(string line) {
 }
 
 // A function to organization and reading data for time system correction
-Rinex3Nav::TimeSysCorr Rinex3Nav::getTimeSysCorr(std::string line)
+rr::Rinex3Nav::TimeSysCorr rr::Rinex3Nav::getTimeSysCorr(std::string line)
 {
     TimeSysCorr t;
     t.type = line.substr(0,4);
@@ -109,27 +109,27 @@ int epochMatcherHelper(double obsTime, std::vector<T> NAV){
 }
 
 // Epoch Time Matcher, returns index of most appropriate data from Navigation vector
-int Rinex3Nav::EpochMatcher(double obsTime, std::vector<Rinex3Nav::DataGPS> NAV) {
+int rr::Rinex3Nav::EpochMatcher(double obsTime, std::vector<Rinex3Nav::DataGPS> NAV) {
     return epochMatcherHelper(obsTime,NAV);
 }
 
 // Epoch Time Matcher, returns index of most appropriate data from Navigation vector
-int Rinex3Nav::EpochMatcher(double obsTime, std::vector<Rinex3Nav::DataGLO> NAV) {
+int rr::Rinex3Nav::EpochMatcher(double obsTime, std::vector<Rinex3Nav::DataGLO> NAV) {
     return epochMatcherHelper(obsTime,NAV);
 }
 
 // Epoch Time Matcher, returns index of most appropriate data from Navigation vector
-int Rinex3Nav::EpochMatcher(double obsTime, std::vector<Rinex3Nav::DataGAL> NAV) {
+int rr::Rinex3Nav::EpochMatcher(double obsTime, std::vector<Rinex3Nav::DataGAL> NAV) {
     return epochMatcherHelper(obsTime,NAV);
 }
 
 // Epoch Time Matcher, returns index of most appropriate data from Navigation vector
-int Rinex3Nav::EpochMatcher(double obsTime, std::vector<Rinex3Nav::DataBEI> NAV) {
+int rr::Rinex3Nav::EpochMatcher(double obsTime, std::vector<Rinex3Nav::DataBEI> NAV) {
     return epochMatcherHelper(obsTime,NAV);
 }
 //=======================================================================================
 
-void Rinex3Nav::readHead(std::ifstream& infile){
+void rr::Rinex3Nav::readHead(std::ifstream& infile){
     //common tokens
     const string sTokenVER = "RINEX VERSION / TYPE";
     const string sTokenPGM = "PGM / RUN BY / DATE";
@@ -536,7 +536,7 @@ void Rinex3Nav::readHead(std::ifstream& infile){
 }
 
 
-std::vector<string> Rinex3Nav::getPMGHeader(std::string line)
+std::vector<string> rr::Rinex3Nav::getPMGHeader(std::string line)
 {
     line = line.substr(0, 60);
     string word;
@@ -556,7 +556,7 @@ std::vector<string> Rinex3Nav::getPMGHeader(std::string line)
 
 //==================================GPS==================================================
 // Navigation Body Organizer for GPS Navigation File
-Rinex3Nav::DataGPS epochNavOrganizerGPS(vector<string> block) {
+rr::Rinex3Nav::DataGPS epochNavOrganizerGPS(vector<string> block) {
     string sys = block[0].substr(0, 1);
     int prn = stoi(block[0].substr(1, 2));
     vector<double> epochInfo = rinex3EpochTimeOrganizer(block[0]);
@@ -570,7 +570,7 @@ Rinex3Nav::DataGPS epochNavOrganizerGPS(vector<string> block) {
     }
     vector<std::optional<double>> parameters = rinex3NavDataSplitter(line);
     // Storing Values into GPS Data Structure
-    Rinex3Nav::DataGPS GPS;
+    rr::Rinex3Nav::DataGPS GPS;
     GPS.PRN = prn;
     GPS.epochInfo = epochInfo;
     GPS.gpsTime = gpsTime(epochInfo);
@@ -622,7 +622,7 @@ Rinex3Nav::DataGPS epochNavOrganizerGPS(vector<string> block) {
 }
 
 // Reader for GPS navigation file
-void Rinex3Nav::readGPS(std::ifstream& infile) {
+void rr::Rinex3Nav::readGPS(std::ifstream& infile) {
     curr_sys = SatelliteSystem::GPS;
     _headerGPS.clear();
     readHead(infile);
@@ -636,7 +636,7 @@ void Rinex3Nav::readGPS(std::ifstream& infile) {
 
 //=================================GLONASS===============================================
 // Navigation Body Organizer for GLONASS Navigation File
-Rinex3Nav::DataGLO epochNavOrganizerGLO(vector<string> block) {
+rr::Rinex3Nav::DataGLO epochNavOrganizerGLO(vector<string> block) {
     string sys = block[0].substr(0, 1);
     int prn = stoi(block[0].substr(1, 2));
     vector<double> epochInfo = rinex3EpochTimeOrganizer(block[0]);
@@ -650,7 +650,7 @@ Rinex3Nav::DataGLO epochNavOrganizerGLO(vector<string> block) {
     }
     vector<std::optional<double>> parameters = rinex3NavDataSplitter(line);
     // Storing Values into GPS Data Structure
-    Rinex3Nav::DataGLO GLO;
+    rr::Rinex3Nav::DataGLO GLO;
     GLO.PRN = prn;
     GLO.epochInfo = epochInfo;
     GLO.gpsTime = gpsTime(epochInfo);
@@ -679,7 +679,7 @@ Rinex3Nav::DataGLO epochNavOrganizerGLO(vector<string> block) {
 
 // Reader for Glonass navigation file
 // Parameters are in ECEF Greenwich coordinate system PZ - 90
-void Rinex3Nav::readGLO(std::ifstream& infile) {
+void rr::Rinex3Nav::readGLO(std::ifstream& infile) {
     curr_sys = SatelliteSystem::Glonass;
     _headerGLO.clear();
     readHead(infile);
@@ -693,7 +693,7 @@ void Rinex3Nav::readGLO(std::ifstream& infile) {
 
 //=================================GALILEO===============================================
 // Navigation Body Organizer for GAL Navigation File
-Rinex3Nav::DataGAL epochNavOrganizerGAL(vector<string> block) {
+rr::Rinex3Nav::DataGAL epochNavOrganizerGAL(vector<string> block) {
     string sys = block[0].substr(0, 1);
     int prn = stoi(block[0].substr(1, 2));
     vector<double> epochInfo = rinex3EpochTimeOrganizer(block[0]);
@@ -707,7 +707,7 @@ Rinex3Nav::DataGAL epochNavOrganizerGAL(vector<string> block) {
     }
     vector<std::optional<double>> parameters = rinex3NavDataSplitter(line);
     // Storing Values into GAL Data Structure
-    Rinex3Nav::DataGAL GAL;
+    rr::Rinex3Nav::DataGAL GAL;
     GAL.PRN = prn;
     GAL.epochInfo = epochInfo;
     GAL.gpsTime = gpsTime(epochInfo);
@@ -759,7 +759,7 @@ Rinex3Nav::DataGAL epochNavOrganizerGAL(vector<string> block) {
 }
 
 // Reader for Galileo navigation file
-void Rinex3Nav::readGAL(std::ifstream& infile) {
+void rr::Rinex3Nav::readGAL(std::ifstream& infile) {
     curr_sys = SatelliteSystem::Galileo;
     _headerGAL.clear();
     readHead(infile);
@@ -772,7 +772,7 @@ void Rinex3Nav::readGAL(std::ifstream& infile) {
 
 
 //=================================BeiDou================================================
-Rinex3Nav::DataBEI epochNavOrganizerBEI(vector<string> block) {
+rr::Rinex3Nav::DataBEI epochNavOrganizerBEI(vector<string> block) {
     string sys = block[0].substr(0, 1);
     int prn = stoi(block[0].substr(1, 2));
     vector<double> epochInfo = rinex3EpochTimeOrganizer(block[0]);
@@ -786,7 +786,7 @@ Rinex3Nav::DataBEI epochNavOrganizerBEI(vector<string> block) {
     }
     vector<std::optional<double>> parameters = rinex3NavDataSplitter(line);
     // Storing Values into BEI Data Structure
-    Rinex3Nav::DataBEI BEI;
+    rr::Rinex3Nav::DataBEI BEI;
     BEI.PRN = prn;
     BEI.epochInfo = epochInfo;
     BEI.gpsTime = gpsTime(epochInfo);
@@ -838,7 +838,7 @@ Rinex3Nav::DataBEI epochNavOrganizerBEI(vector<string> block) {
     return BEI;
 }
 
-void Rinex3Nav::readBEI(std::ifstream& infile)
+void rr::Rinex3Nav::readBEI(std::ifstream& infile)
 {
     curr_sys = SatelliteSystem::BeiDou;
     _headerBEI.clear();
@@ -851,7 +851,7 @@ void Rinex3Nav::readBEI(std::ifstream& infile)
 //=======================================================================================
 
 // Reader for GPS navigation file
-void Rinex3Nav::readMixed(std::ifstream& infile) {
+void rr::Rinex3Nav::readMixed(std::ifstream& infile) {
     curr_sys = SatelliteSystem::Mixed;
     clear();
 
@@ -870,7 +870,7 @@ void Rinex3Nav::readMixed(std::ifstream& infile) {
 }
 
 
-void Rinex3Nav::clear()
+void rr::Rinex3Nav::clear()
 {
     _headerGAL.clear();
     _headerGLO.clear();
@@ -884,7 +884,7 @@ void Rinex3Nav::clear()
 }
 
 
-void Rinex3Nav::readBody(ifstream& infile)
+void rr::Rinex3Nav::readBody(ifstream& infile)
 {
     vector<string> block;
     string line;
@@ -917,7 +917,7 @@ void Rinex3Nav::readBody(ifstream& infile)
     }
 }
 
-void Rinex3Nav::saveBlock(std::vector<std::string>& block, SatelliteSystem sys, std::string ID)
+void rr::Rinex3Nav::saveBlock(std::vector<std::string>& block, SatelliteSystem sys, std::string ID)
 {
     switch (sys) {
     case SatelliteSystem::GPS:{
@@ -993,7 +993,7 @@ void Rinex3Nav::saveBlock(std::vector<std::string>& block, SatelliteSystem sys, 
 
 //===================================Structs============================================
 
-std::vector<std::optional<double>> Rinex3Nav::DataGPS::toVec()
+std::vector<std::optional<double>> rr::Rinex3Nav::DataGPS::toVec()
 {
     std::vector<std::optional<double>> vecData;
     vecData.push_back(clockBias);
@@ -1038,7 +1038,7 @@ std::vector<std::optional<double>> Rinex3Nav::DataGPS::toVec()
     return vecData;
 }
 
-std::vector<std::optional<double>> Rinex3Nav::DataGLO::toVec()
+std::vector<std::optional<double>> rr::Rinex3Nav::DataGLO::toVec()
 {
     std::vector<std::optional<double>> vecData;
     vecData.push_back(clockBias);
@@ -1063,7 +1063,7 @@ std::vector<std::optional<double>> Rinex3Nav::DataGLO::toVec()
     return vecData;
 }
 
-std::vector<std::optional<double>> Rinex3Nav::DataGAL::toVec()
+std::vector<std::optional<double>> rr::Rinex3Nav::DataGAL::toVec()
 {
     std::vector<std::optional<double>> vecData;
     vecData.push_back(clockBias);
@@ -1109,7 +1109,7 @@ std::vector<std::optional<double>> Rinex3Nav::DataGAL::toVec()
     return vecData;
 }
 
-std::vector<std::optional<double>> Rinex3Nav::DataBEI::toVec()
+std::vector<std::optional<double>> rr::Rinex3Nav::DataBEI::toVec()
 {
     std::vector<std::optional<double>> vecData;
     vecData.push_back(clockBias);
@@ -1157,9 +1157,9 @@ std::vector<std::optional<double>> Rinex3Nav::DataBEI::toVec()
 //======================================================================================
 
 //======================================================================================
-ViewNav::ViewNav(){}
+rr::ViewNav::ViewNav(){}
 
-ViewNav &ViewNav::operator=(const Rinex3Nav &other)
+rr::ViewNav &rr::ViewNav::operator=(const Rinex3Nav &other)
 {
     this->_headerGPS = other._headerGPS;
     this->_headerGLO = other._headerGLO;
@@ -1173,7 +1173,7 @@ ViewNav &ViewNav::operator=(const Rinex3Nav &other)
     return *this;
 }
 
-ViewNav::ViewNav(const Rinex3Nav &other)
+rr::ViewNav::ViewNav(const Rinex3Nav &other)
 {
     this->_headerGPS = other._headerGPS;
     this->_headerGLO = other._headerGLO;
@@ -1189,7 +1189,7 @@ ViewNav::ViewNav(const Rinex3Nav &other)
 
 
 //======================================================================================
-void Rinex3Nav::HeaderGPS::clear()
+void rr::Rinex3Nav::HeaderGPS::clear()
 {
     type.clear();
     version = 0;
@@ -1205,7 +1205,7 @@ void Rinex3Nav::HeaderGPS::clear()
 
 }
 
-void Rinex3Nav::HeaderGLO::clear()
+void rr::Rinex3Nav::HeaderGLO::clear()
 {
     type.clear();
     version = 0;
@@ -1217,7 +1217,7 @@ void Rinex3Nav::HeaderGLO::clear()
     leap_seconds.clear();
 }
 
-void Rinex3Nav::HeaderGAL::clear()
+void rr::Rinex3Nav::HeaderGAL::clear()
 {
     type.clear();
     version = 0;
@@ -1231,7 +1231,7 @@ void Rinex3Nav::HeaderGAL::clear()
     leap_seconds.clear();
 }
 
-void Rinex3Nav::HeaderBEI::clear()
+void rr::Rinex3Nav::HeaderBEI::clear()
 {
     type.clear();
     version = 0;
@@ -1247,7 +1247,7 @@ void Rinex3Nav::HeaderBEI::clear()
 }
 //======================================================================================
 
-void Rinex3Nav::TimeSysCorr::clear()
+void rr::Rinex3Nav::TimeSysCorr::clear()
 {
     this->type.clear();
     a0_coef = 0;
@@ -1261,7 +1261,7 @@ void Rinex3Nav::TimeSysCorr::clear()
 
 }
 
-void Rinex3Nav::IonCorr::clear()
+void rr::Rinex3Nav::IonCorr::clear()
 {
     type.clear();
     params.clear();

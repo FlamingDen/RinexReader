@@ -1,6 +1,6 @@
 #include "enumtypes.h"
 
-QString getSatelliteSystemShort(SatelliteSystem s)
+QString rr::getSatelliteSystemShort(SatelliteSystem s)
 {
     switch (s) {
     case SatelliteSystem::GPS:
@@ -19,9 +19,9 @@ QString getSatelliteSystemShort(SatelliteSystem s)
     return {};
 }
 
-QString getSatelliteSystemShort(int s){ return getSatelliteSystemShort(static_cast<SatelliteSystem>(s));}
+QString rr::getSatelliteSystemShort(int s){ return getSatelliteSystemShort(static_cast<SatelliteSystem>(s));}
 
-QString getSatelliteSystem(SatelliteSystem s)
+QString rr::getSatelliteSystem(SatelliteSystem s)
 {
     switch (s) {
     case SatelliteSystem::None:
@@ -42,9 +42,9 @@ QString getSatelliteSystem(SatelliteSystem s)
     return {};
 }
 
-QString getSatelliteSystem(int s){ return getSatelliteSystem(static_cast<SatelliteSystem>(s));}
+QString rr::getSatelliteSystem(int s){ return getSatelliteSystem(static_cast<SatelliteSystem>(s));}
 
-SatelliteSystem getSatelliteSystem(QString sys)
+rr::SatelliteSystem rr::getSatelliteSystem(QString sys)
 {
     if (sys == "G")
         return SatelliteSystem::GPS;

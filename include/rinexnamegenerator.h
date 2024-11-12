@@ -17,6 +17,7 @@
  *      string getPDPLowerCase(IdPDP id)       - return the ID in lower case (BARA)
  *      string getPDPUpperCase(IdPDP id)       - return the ID in upper case (bara)
  */
+
 enum IdPDP
 {
     BARA,
@@ -192,6 +193,7 @@ namespace Date {
  *              std::cout << x << std::endl;
  *      ---------------------------------------------------------------------------------------------------------------
  */
+namespace rr {
 class RinexNameGenerator
 {
 public:
@@ -224,7 +226,7 @@ private:
     std::string h = "h";
     std::string extension = "extension";
 };
-
+}
 std::string getNamePDP(IdPDP id);
 std::string getPDPLowerCase(IdPDP id);
 std::string getPDPUpperCase(IdPDP id);

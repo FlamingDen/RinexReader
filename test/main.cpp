@@ -4,8 +4,6 @@
 
 #include "rinexnamegenerator.h"
 #include "rinexreader.h"
-#include <regex>
-
 
 int main(int argc, char *argv[])
 {
@@ -14,45 +12,41 @@ int main(int argc, char *argv[])
     using Qt::endl;
     out << QCoreApplication::applicationDirPath() << endl;
 
-
     //==========================Declare=============================================
-    QString pathObs("C:/Utils/RinexSample/goml299o.23o");
-    QString navGPS("C:/Utils/RinexSample/goml299o.23n");
-    QString navGLO("C:/Utils/RinexSample/goml299o.23g");
-    QString navGAL("C:/Utils/RinexSample/goml299o.23l");
-    QString navBEI("C:/Utils/RinexSample/goml299o.23f");
+    QString pathObs("D:/QtProjects/RinexReaderLib/test/file_for_samples/goml299o.23o");
+    QString navGPS("D:/QtProjects/RinexReaderLib/test/file_for_samples/goml299o.23n");
+    QString navGLO("D:/QtProjects/RinexReaderLib/test/file_for_samples/goml299o.23g");
+    QString navGAL("D:/QtProjects/RinexReaderLib/test/file_for_samples/goml299o.23l");
+    QString navBEI("D:/QtProjects/RinexReaderLib/test/file_for_samples/goml299o.23f");
 
     QStringList navPaths{navGPS, navGLO, navGAL, navBEI};
 
-    QString pathCSVobs = "C:/Utils/RinexSample/infEpochs.csv";
-    QString pathCSVnav = "C:/Utils/RinexSample/infNavs.csv";
+    QString pathCSVobs = "D:/QtProjects/RinexReaderLib/test/file_for_samples/infEpochs.csv";
+    QString pathCSVnav = "D:/QtProjects/RinexReaderLib/test/file_for_samples/infNavs.csv";
     //==============================================================================
-
 
     //=============================RinexReader API(sample)==========================
 
-    RinexReader rr(pathObs,navPaths);
-    Rinex3Obs::ObsHeaderInfo headObs = rr.getObsHeaderInfo();
+    rr::RinexReader rr(pathObs, navPaths);
+    rr::Rinex3Obs::ObsHeaderInfo headObs = rr.getObsHeaderInfo();
 
-    //QList<Rinex3Obs::ObsEpochInfo> inf = rr.getEpochs();
-    ViewNav viewNav;
+    // QList<Rinex3Obs::ObsEpochInfo> inf = rr.getEpochs();
+    rr::ViewNav viewNav;
 
     rr.nextNav();
-    viewNav= rr.getNav();
+    viewNav = rr.getNav();
     rr.nextNav();
-    viewNav= rr.getNav();
+    viewNav = rr.getNav();
     rr.nextNav();
     viewNav = rr.getNav();
     rr.clearNavData();
     rr.nextNav();
     viewNav = rr.getNav();
 
-
-    RinexNameGenerator qwe;
+    rr::RinexNameGenerator qwe;
     qwe.generateUrl(IdPDP::KLEC, "24/1/2023 12:00:00");
 
-
-    //rr.saveAsCSV(pathCSVobs, RinexType::OBSERVATION);
-    //rr.saveAsCSV(pathCSVnav, RinexType::NAVIGATION);
+    // rr.saveAsCSV(pathCSVobs, RinexType::OBSERVATION);
+    // rr.saveAsCSV(pathCSVnav, RinexType::NAVIGATION);
     //==============================================================================
 }

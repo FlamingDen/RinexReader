@@ -6,7 +6,7 @@
 #include <rinex3obs.h>
 #include <rinex3nav.h>
 
-
+namespace rr {
 class CSVCreator
 {
 public:
@@ -45,5 +45,5 @@ public:
 private:
     Rinex3Nav nav;
 };
-
+}
 #endif // CSVCREATOR_H

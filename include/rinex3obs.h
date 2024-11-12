@@ -6,6 +6,8 @@
 #include <optional>
 
 #include "ireading.h"
+
+namespace rr {
 class Rinex3Obs : IReading
 {
 public:
@@ -116,5 +118,5 @@ private:
     std::vector<Rinex3Obs::ObsHeaderInfo::ScaleFactor> obsScaleFactorHeader(std::vector<std::string> block);
     std::map<std::string, std::vector<Rinex3Obs::ObsHeaderInfo::PhaseShifts>> obsPhaseShiftsHeader(std::vector<std::string> block);
 };
-
+}
 #endif // RINEX3OBS_H

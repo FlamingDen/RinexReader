@@ -2,7 +2,7 @@
 #include "csvcreator.h"
 
 
-RinexReader::RinexReader()
+rr::RinexReader::RinexReader()
 {
     rinex_version_obs = -1;
     rinex_version_nav = -1;
@@ -11,34 +11,34 @@ RinexReader::RinexReader()
     nav_counter = 0;
 }
 
-RinexReader::RinexReader(QString path) : RinexReader()
+rr::RinexReader::RinexReader(QString path) : RinexReader()
 {
     init(path);
 }
 
-RinexReader::RinexReader(QString path_obs, QString path_nav) :  RinexReader()
+rr::RinexReader::RinexReader(QString path_obs, QString path_nav) :  RinexReader()
 {
     init(path_obs);
     init(path_nav);
 }
 
-RinexReader::RinexReader(QStringList paths_nav) : RinexReader()
+rr::RinexReader::RinexReader(QStringList paths_nav) : RinexReader()
 {
     this->paths_nav = paths_nav;
     init(paths_nav.at(0));
 }
 
-RinexReader::RinexReader(QString path_obs, QStringList paths_nav) : RinexReader(paths_nav)
+rr::RinexReader::RinexReader(QString path_obs, QStringList paths_nav) : RinexReader(paths_nav)
 {
     init(path_obs);
 }
 
-RinexReader::~RinexReader()
+rr::RinexReader::~RinexReader()
 {
     close();
 }
 
-RinexReader::RinexReader(const RinexReader &other) : RinexReader(other.getPathObs(),other.getPathsNav()){
+rr::RinexReader::RinexReader(const RinexReader &other) : RinexReader(other.getPathObs(),other.getPathsNav()){
     close();
     this->setPathObs(other.path_obs);
     this->setPathsNav(other.paths_nav);
@@ -47,7 +47,7 @@ RinexReader::RinexReader(const RinexReader &other) : RinexReader(other.getPathOb
     this->nav = other.nav;
 }
 
-RinexReader &RinexReader::operator=(const RinexReader &other)
+rr::RinexReader &rr::RinexReader::operator=(const RinexReader &other)
 {
     if (this != &other){
         close();
@@ -63,7 +63,7 @@ RinexReader &RinexReader::operator=(const RinexReader &other)
 
 
 
-bool RinexReader::readObsHeader()
+bool rr::RinexReader::readObsHeader()
 {
     if(path_obs.isEmpty() || !fin_obs.is_open())
         return false;
@@ -78,12 +78,12 @@ bool RinexReader::readObsHeader()
     return false;
 }
 
-const Rinex3Obs::ObsHeaderInfo& RinexReader::getObsHeaderInfo()
+const rr::Rinex3Obs::ObsHeaderInfo& rr::RinexReader::getObsHeaderInfo()
 {
     return obs._Header;
 }
 
-const QList<Rinex3Obs::ObsEpochInfo>& RinexReader::getEpochs()
+const QList<rr::Rinex3Obs::ObsEpochInfo>& rr::RinexReader::getEpochs()
 {
     //QList<Rinex3Obs::ObsEpochInfo> epochs;
     if (!path_obs.isEmpty() && fin_obs.is_open()){
@@ -109,7 +109,7 @@ const QList<Rinex3Obs::ObsEpochInfo>& RinexReader::getEpochs()
     return epochs;
 }
 
-void RinexReader::saveAsCSV(QString pathToSave, RinexType type, QString sep)
+void rr::RinexReader::saveAsCSV(QString pathToSave, RinexType type, QString sep)
 {
     switch (type) {
     case RinexType::OBSERVATION: {
@@ -134,7 +134,7 @@ void RinexReader::saveAsCSV(QString pathToSave, RinexType type, QString sep)
 
 
 
-void RinexReader::nextNav()
+void rr::RinexReader::nextNav()
 {
     if (paths_nav.isEmpty() || nav_counter >= paths_nav.size())
         return;
@@ -147,7 +147,7 @@ void RinexReader::nextNav()
     }
 }
 
-bool RinexReader::readNav(QString path)
+bool rr::RinexReader::readNav(QString path)
 {
     if (!paths_nav.contains(path))
         return false;
@@ -182,7 +182,7 @@ bool RinexReader::readNav(QString path)
     return false;
 }
 
-void RinexReader::readNav(int index)
+void rr::RinexReader::readNav(int index)
 {
     if (index < 0 || index >= paths_nav.size())
         return;
@@ -191,7 +191,7 @@ void RinexReader::readNav(int index)
 
 
 
-void RinexReader::clearObs()
+void rr::RinexReader::clearObs()
 {
     epochs.clear();
 
@@ -213,7 +213,7 @@ void RinexReader::clearObs()
     fin_obs.close();
 }
 
-void RinexReader::clearRRNav()
+void rr::RinexReader::clearRRNav()
 {
     clearNavData();
 
@@ -223,63 +223,63 @@ void RinexReader::clearRRNav()
     fin_nav.close();
 }
 
-void RinexReader::clearNavData()
+void rr::RinexReader::clearNavData()
 {
     nav.clear();
 }
 
 
 
-void RinexReader::close()
+void rr::RinexReader::close()
 {
     clearObs();
     clearRRNav();
 }
 
 
-const QString& RinexReader::getPathObs() const
+const QString& rr::RinexReader::getPathObs() const
 {
     return path_obs;
 }
 
-ViewNav RinexReader::getNav() const
+rr::ViewNav rr::RinexReader::getNav() const
 {
     ViewNav view_nav = nav;
     return view_nav;
 }
 
-const QStringList& RinexReader::getPathsNav() const
+const QStringList& rr::RinexReader::getPathsNav() const
 {
     return paths_nav;
 }
 
-const double& RinexReader::getRinexVersionObs() const
+const double& rr::RinexReader::getRinexVersionObs() const
 {
     return rinex_version_obs;
 }
 
-const double& RinexReader::getRinexVersionNav() const
+const double& rr::RinexReader::getRinexVersionNav() const
 {
     return rinex_version_nav;
 }
 
-const int& RinexReader::getRinexTypeObs() const
+const int& rr::RinexReader::getRinexTypeObs() const
 {
     return rinex_type_obs;
 }
 
-const int& RinexReader::getRinexTypeNav() const
+const int& rr::RinexReader::getRinexTypeNav() const
 {
     return rinex_type_nav;
 }
 
-void RinexReader::setPathObs(QString newPath_obs)
+void rr::RinexReader::setPathObs(QString newPath_obs)
 {
     clearObs();
     init(newPath_obs);
 }
 
-void RinexReader::setPathsNav(const QStringList &newPaths_nav)
+void rr::RinexReader::setPathsNav(const QStringList &newPaths_nav)
 {
     clearRRNav();
     paths_nav = newPaths_nav;
@@ -287,7 +287,7 @@ void RinexReader::setPathsNav(const QStringList &newPaths_nav)
     init(paths_nav.at(0));
 }
 
-void RinexReader::addPath_nav(QString path)
+void rr::RinexReader::addPath_nav(QString path)
 {
     if (paths_nav.isEmpty()){
         init(path);
@@ -297,14 +297,14 @@ void RinexReader::addPath_nav(QString path)
         paths_nav.append(path);
 }
 
-const QString& RinexReader::getCurrPathNav() const
+const QString& rr::RinexReader::getCurrPathNav() const
 {
     return curr_path_nav;
 }
 
 
 
-bool RinexReader::checkVersion(RinexType type)
+bool rr::RinexReader::checkVersion(RinexType type)
 {
     double rinex_version;
     rinex_version = type == RinexType::OBSERVATION ? rinex_version_obs : rinex_version_nav;
@@ -316,7 +316,7 @@ bool RinexReader::checkVersion(RinexType type)
 }
 
 //open stream for file(path) and add to field if not contains
-void RinexReader::init(QString path)
+void rr::RinexReader::init(QString path)
 {
     std::ifstream in;
     double version;

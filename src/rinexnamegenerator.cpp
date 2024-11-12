@@ -4,16 +4,16 @@
 #include <chrono>
 #include <regex>
 
-RinexNameGenerator::RinexNameGenerator() {}
+rr::RinexNameGenerator::RinexNameGenerator() {}
 
 
 //-----------------------------------------------------------------------------------------------------------------------
-std::vector<std::string> RinexNameGenerator::getDefault_types_files() const
+std::vector<std::string> rr::RinexNameGenerator::getDefault_types_files() const
 {
     return default_types_files;
 }
 
-void RinexNameGenerator::setDefault_types_files(const std::vector<std::string> &newDefault_types_files)
+void rr::RinexNameGenerator::setDefault_types_files(const std::vector<std::string> &newDefault_types_files)
 {
     default_types_files = newDefault_types_files;
 }
@@ -50,24 +50,24 @@ std::vector<std::string> getStrDate(const std::string Date) {
     return date;
 }
 
-std::string RinexNameGenerator::generateUrl(IdPDP ssss, std::time_t curr_time_t, std::string extension, std::string base_directory)
+std::string rr::RinexNameGenerator::generateUrl(IdPDP ssss, std::time_t curr_time_t, std::string extension, std::string base_directory)
 {
     struct tm* now = localtime(&curr_time_t);
     return generateUrl(ssss, std::to_string(now->tm_hour),std::to_string( now->tm_mday), std::to_string(now->tm_mon), std::to_string( now->tm_year + 1900), extension, base_directory);
 }
 
-std::string RinexNameGenerator::generateUrl(IdPDP ssss, std::string date_time, std::string extension, std::string base_directory)
+std::string rr::RinexNameGenerator::generateUrl(IdPDP ssss, std::string date_time, std::string extension, std::string base_directory)
 {
     std::vector<std::string> date = getStrDate(date_time);
     return generateUrl(ssss, date.at(3), date.at(0), date.at(1), date.at(2), extension, base_directory);
 }
 
-std::string RinexNameGenerator::generateUrl(IdPDP ssss, unsigned int h, unsigned int dd, unsigned int mm, unsigned int yyyy, std::string extension, std::string base_directory)
+std::string rr::RinexNameGenerator::generateUrl(IdPDP ssss, unsigned int h, unsigned int dd, unsigned int mm, unsigned int yyyy, std::string extension, std::string base_directory)
 {
     return generateUrl(ssss, std::to_string(h), std::to_string(dd), std::to_string(mm), std::to_string(yyyy), extension, base_directory);
 }
 
-std::string RinexNameGenerator::generateUrl(IdPDP ssss, std::string h, std::string dd, std::string mm, std::string yyyy,  std::string extension, std::string base_directory)
+std::string rr::RinexNameGenerator::generateUrl(IdPDP ssss, std::string h, std::string dd, std::string mm, std::string yyyy,  std::string extension, std::string base_directory)
 {
     if (Date::isDateTrue(stoi(dd), stoi(mm), stoi(yyyy))){
         std::string url(maskUrl);
@@ -90,24 +90,24 @@ std::string RinexNameGenerator::generateUrl(IdPDP ssss, std::string h, std::stri
     return {};
 }
 
-std::vector<std::string> RinexNameGenerator::generateRinexFilesNames(IdPDP ssss, std::time_t curr_time_t)
+std::vector<std::string> rr::RinexNameGenerator::generateRinexFilesNames(IdPDP ssss, std::time_t curr_time_t)
 {
     struct tm* now = localtime(&curr_time_t);
     return generateRinexFilesNames(ssss, std::to_string(now->tm_hour),std::to_string( now->tm_mday), std::to_string(now->tm_mon), std::to_string( now->tm_year + 1900));
 }
 
-std::vector<std::string> RinexNameGenerator::generateRinexFilesNames(IdPDP ssss, std::string date_time)
+std::vector<std::string> rr::RinexNameGenerator::generateRinexFilesNames(IdPDP ssss, std::string date_time)
 {
     std::vector<std::string> date = getStrDate(date_time);
     return generateRinexFilesNames(ssss, date.at(3), date.at(0), date.at(1), date.at(2));
 }
 
-std::vector<std::string> RinexNameGenerator::generateRinexFilesNames(IdPDP ssss, unsigned int h, unsigned int dd, unsigned int mm, unsigned int yyyy)
+std::vector<std::string> rr::RinexNameGenerator::generateRinexFilesNames(IdPDP ssss, unsigned int h, unsigned int dd, unsigned int mm, unsigned int yyyy)
 {
     return generateRinexFilesNames(ssss, std::to_string(h), std::to_string(dd), std::to_string(mm), std::to_string(yyyy));
 }
 
-std::vector<std::string> RinexNameGenerator::generateRinexFilesNames(IdPDP ssss, std::string h, std::string dd, std::string mm, std::string yyyy)
+std::vector<std::string> rr::RinexNameGenerator::generateRinexFilesNames(IdPDP ssss, std::string h, std::string dd, std::string mm, std::string yyyy)
 {
     if (!Date::isDateTrue(stoi(dd), stoi(mm), stoi(yyyy)))
         return {};
@@ -304,13 +304,6 @@ std::string getNamePDP(IdPDP id)
     return {};
 }
 
-std::string getPDPLowerCase(IdPDP id)
-{
-    std::string ssss  = getPDPUpperCase(id);
-    transform(ssss.begin(), ssss.end(), ssss.begin(),tolower);
-    return ssss;
-}
-
 std::string getPDPUpperCase(IdPDP id)
 {
     switch (id) {
@@ -416,4 +409,13 @@ std::string getPDPUpperCase(IdPDP id)
     }
     return {};
 }
+
+std::string getPDPLowerCase(IdPDP id)
+{
+    std::string ssss  = getPDPUpperCase(id);
+    transform(ssss.begin(), ssss.end(), ssss.begin(),tolower);
+    return ssss;
+}
+
+
 //-----------------------------------------------------------------------------------------------------------------------

@@ -6,12 +6,12 @@
 using namespace std;
 
 // CONSTRUCTOR AND DESTRUCTOR DEFINITIONS
-Rinex3Obs::Rinex3Obs() {}
-Rinex3Obs::~Rinex3Obs() {}
+rr::Rinex3Obs::Rinex3Obs() {}
+rr::Rinex3Obs::~Rinex3Obs() {}
 
 // A function to organize specific observation types (for eg: prn - > pseudorange map)
 // PRN - > Pseudorange Map is used for satellite position
-map<int, double> Rinex3Obs::specificObsMapper(map<int, vector<double>> obsSAT, vector<string> obsTypes, string specificObs) {
+map<int, double> rr::Rinex3Obs::specificObsMapper(map<int, vector<double>> obsSAT, vector<string> obsTypes, string specificObs) {
     map<int, double> rangeMap;
     map<int, vector<double>>::iterator it = obsSAT.begin();
     size_t ind = std::find(obsTypes.begin(), obsTypes.end(), specificObs) - obsTypes.begin();
@@ -72,7 +72,7 @@ map<string, vector<string>> obsTypesHeader(vector<string> block) {
 }
 
 // A function to organize scale factor as stated in header of rinex observation file
-std::vector<Rinex3Obs::ObsHeaderInfo::ScaleFactor> Rinex3Obs::obsScaleFactorHeader(std::vector<std::string> block) {
+std::vector<rr::Rinex3Obs::ObsHeaderInfo::ScaleFactor> rr::Rinex3Obs::obsScaleFactorHeader(std::vector<std::string> block) {
     // Initializing variables to hold information
     map<string, vector<string>> types;
     vector<Rinex3Obs::ObsHeaderInfo::ScaleFactor> vec_sf;
@@ -132,7 +132,7 @@ std::vector<Rinex3Obs::ObsHeaderInfo::ScaleFactor> Rinex3Obs::obsScaleFactorHead
 }
 
 // A function to organize phase shift as stated in header of rinex observation file
-std::map<string, std::vector<Rinex3Obs::ObsHeaderInfo::PhaseShifts>> Rinex3Obs::obsPhaseShiftsHeader(std::vector<std::string> block)
+std::map<string, std::vector<rr::Rinex3Obs::ObsHeaderInfo::PhaseShifts>> rr::Rinex3Obs::obsPhaseShiftsHeader(std::vector<std::string> block)
 {
     std::map<std::string, vector<ObsHeaderInfo::PhaseShifts>> phase_shifts;
     ObsHeaderInfo::PhaseShifts shift;
@@ -188,7 +188,7 @@ std::map<string, std::vector<Rinex3Obs::ObsHeaderInfo::PhaseShifts>> Rinex3Obs::
 }
 
 // Extracts and stores the header information from Rinex v3 File
-void Rinex3Obs::readHead(ifstream& infile) {
+void rr::Rinex3Obs::readHead(ifstream& infile) {
     // String tokens to look for
     const string sTokenVER = "RINEX VERSION / TYPE";
     const string sTokenPGM = "PGM / RUN BY / DATE";
@@ -588,7 +588,7 @@ void rinex3SatObsOrganizer(string line, map<string, map<int, vector<double>>>& d
 }
 
 // This function is used to organize the string block of epoch info into data structure
-void obsOrganizer(vector<string> block, Rinex3Obs::ObsEpochInfo& obs) {
+void obsOrganizer(vector<string> block, rr::Rinex3Obs::ObsEpochInfo& obs) {
     // First line contains epoch time information and receiver clock offset
     obs.epochRecord = rinex3EpochRecordOrganizer(block[0]);
     obs.epochRecord.size() > 8 ? obs.recClockOffset = obs.epochRecord.back(): obs.recClockOffset = std::nullopt;
@@ -627,7 +627,7 @@ void obsOrganizer(vector<string> block, Rinex3Obs::ObsEpochInfo& obs) {
 }
 
 // Setting observation attributes for each satellite constellations
-void Rinex3Obs::setObservations(map<string, map<int, vector<double>>> observations) {
+void rr::Rinex3Obs::setObservations(map<string, map<int, vector<double>>> observations) {
     if (observations.count("G") > 0) { _obsGPS.clear(); _obsGPS = observations["G"]; }
     if (observations.count("R") > 0) { _obsGLO.clear(); _obsGLO = observations["R"]; }
     if (observations.count("E") > 0) { _obsGAL.clear(); _obsGAL = observations["E"]; }
@@ -635,7 +635,7 @@ void Rinex3Obs::setObservations(map<string, map<int, vector<double>>> observatio
 }
 
 // This function extracts and stores epochwise observations from file
-void Rinex3Obs::readBody(ifstream& infile) {
+void rr::Rinex3Obs::readBody(ifstream& infile) {
     // Rinex v3 special identifier for new epoch of observations
     const string sTokenEpoch = ">";
     const string sTokenSAT = "OF SATELLITES";
@@ -697,13 +697,13 @@ void Rinex3Obs::readBody(ifstream& infile) {
 
 //============================Clear======================================================
 // To clear contents in observation data structure
-void Rinex3Obs::clear(Rinex3Obs::ObsEpochInfo& obs) {
+void rr::Rinex3Obs::clear(Rinex3Obs::ObsEpochInfo& obs) {
     obs.clear();
     obs.gpsTime = 0;
 }
 
 // To clear contents in observation data structure
-void Rinex3Obs::clear(Rinex3Obs::ObsHeaderInfo& header) {
+void rr::Rinex3Obs::clear(Rinex3Obs::ObsHeaderInfo& header) {
 
     header.ant_delta_hen.clear();
     header.approx_pos_xyz.clear();
@@ -714,7 +714,7 @@ void Rinex3Obs::clear(Rinex3Obs::ObsHeaderInfo& header) {
 }
 //=======================================================================================
 
-void Rinex3Obs::ObsEpochInfo::clear()
+void rr::Rinex3Obs::ObsEpochInfo::clear()
 {
     epochRecord.clear();
     numSatsGAL = 0;
@@ -725,14 +725,14 @@ void Rinex3Obs::ObsEpochInfo::clear()
     recClockOffset = 0;
 }
 
-void Rinex3Obs::ObsHeaderInfo::ScaleFactor::clear()
+void rr::Rinex3Obs::ObsHeaderInfo::ScaleFactor::clear()
 {
     this->scale = 0;
     this->types.clear();
     this->types.clear();
 }
 
-void Rinex3Obs::ObsHeaderInfo::PhaseShifts::clear()
+void rr::Rinex3Obs::ObsHeaderInfo::PhaseShifts::clear()
 {
     this->code.clear();
     if (sats.has_value())

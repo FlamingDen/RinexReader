@@ -9,7 +9,7 @@
 #include "enumtypes.h"
 #include "ireading.h"
 
-//TO DO BEIDOU
+namespace rr {
 class Rinex3Nav : IReading
 {
 public:
@@ -372,5 +372,5 @@ struct ViewNav
     std::map<int, std::vector<Rinex3Nav::DataGAL>> _navGAL;
     std::map<int, std::vector<Rinex3Nav::DataBEI>> _navBEI;
 };
-
+}
 #endif /* RINEX3NAV_H_ */

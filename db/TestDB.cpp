@@ -4,7 +4,7 @@
 #include "rinexreader.h"
 #include "facadedb.h"
 
-void uploadDatatoDB(FacadeDB* db, RinexReader& rr);
+void uploadDatatoDB(FacadeDB* db, rr::RinexReader& rr);
 void testFacadeDB();
 
 int main(int argc, char *argv[])
@@ -20,18 +20,18 @@ int main(int argc, char *argv[])
 
     QStringList navPaths{navGPS, navGLO, navGAL, navBEI};
     //==============================================================================
-    RinexReader rr(pathObs,navPaths);
+    rr::RinexReader rr(pathObs,navPaths);
 
     testFacadeDB();
     //uploadDatatoDB(FacadeDB::getInstance(),rr);
 }
 
-void uploadDatatoDB(FacadeDB* db, RinexReader &rr){
+void uploadDatatoDB(FacadeDB* db, rr::RinexReader &rr){
     QDateTime st = QDateTime::currentDateTime();
 
     //===============================================================
-    QList<Rinex3Obs::ObsEpochInfo> inf = rr.getEpochs();
-    QList<Rinex3Obs::ObsEpochInfo>::Iterator listIt = inf.begin();
+    QList<rr::Rinex3Obs::ObsEpochInfo> inf = rr.getEpochs();
+    QList<rr::Rinex3Obs::ObsEpochInfo>::Iterator listIt = inf.begin();
     for(listIt = inf.begin(); listIt != inf.end(); ++listIt){
         std::string obsTimeHMS = HHMMSS(listIt->epochRecord[3], listIt->epochRecord[4], listIt->epochRecord[5]);
         std::cout << "OBS Time : " << obsTimeHMS;
