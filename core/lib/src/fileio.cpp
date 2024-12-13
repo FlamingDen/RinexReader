@@ -64,7 +64,7 @@ void FileIO::checkRinexVersionType(double &rinex_version, std::string &type_file
                 rinex_version = std::stod(words[0]);
             }
             else {
-                rinex_version = NULL;
+                rinex_version = 0;
             }
             // Type of file
             type_file = words[1][0];

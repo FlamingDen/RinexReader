@@ -12,12 +12,13 @@ int main(int argc, char *argv[])
     using Qt::endl;
     out << QCoreApplication::applicationDirPath() << endl;
 
+
     //==========================Declare=============================================
-    QString pathObs("D:/QtProjects/RinexReaderLib/test/file_for_samples/goml299o.23o");
-    QString navGPS("D:/QtProjects/RinexReaderLib/test/file_for_samples/goml299o.23n");
-    QString navGLO("D:/QtProjects/RinexReaderLib/test/file_for_samples/goml299o.23g");
-    QString navGAL("D:/QtProjects/RinexReaderLib/test/file_for_samples/goml299o.23l");
-    QString navBEI("D:/QtProjects/RinexReaderLib/test/file_for_samples/goml299o.23f");
+    QString pathObs("D:/QtProjects/RinexReaderLib/core/tests/file_for_samples/goml299o.23o");
+    QString navGPS("D:/QtProjects/RinexReaderLib/core/tests/file_for_samples/goml299o.23n");
+    QString navGLO("D:/QtProjects/RinexReaderLib/core/tests/file_for_samples/goml299o.23g");
+    QString navGAL("D:/QtProjects/RinexReaderLib/core/tests/file_for_samples/goml299o.23l");
+    QString navBEI("D:/QtProjects/RinexReaderLib/core/tests/file_for_samples/goml299o.23f");
 
     QStringList navPaths{navGPS, navGLO, navGAL, navBEI};
 
