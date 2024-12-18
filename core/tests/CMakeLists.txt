@@ -1,7 +1,3 @@
-project(RinexTests LANGUAGES CXX)
-
-add_executable(RinexTest
-    everyday.cpp
-)
-
-target_link_libraries(RinexTest PRIVATE Qt${QT_VERSION_MAJOR}::Core Qt${QT_VERSION_MAJOR}::Sql RinexReader)
+﻿add_subdirectory(just)
+add_subdirectory(test_coordinates)
+add_subdirectory(db_test)

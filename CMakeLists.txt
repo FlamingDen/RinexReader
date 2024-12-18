@@ -41,15 +41,28 @@ add_library(RinexReader
     core/lib/include/stringutils.h
     core/lib/include/timeutils.h
     core/lib/include/ireading.h
+
+    core/lib/models/pdp.h
+    core/lib/models/pdp.cpp
+
+    core/lib/db/facadedb.h
+    core/lib/db/facadedb.cpp
 )
 
 target_include_directories(RinexReader INTERFACE
     ${CMAKE_CURRENT_SOURCE_DIR}/core/lib/src
-    ${CMAKE_CURRENT_SOURCE_DIR}/core/lib/include)
+    ${CMAKE_CURRENT_SOURCE_DIR}/core/lib/include
+
+    ${CMAKE_CURRENT_SOURCE_DIR}/core/lib/models
+
+    ${CMAKE_CURRENT_SOURCE_DIR}/core/lib/db
+)
 
 target_include_directories(RinexReader PRIVATE
     core/lib/include
     core/lib/src
+    core/lib/models
+    core/lib/db
 )
 
 target_link_libraries(RinexReader PRIVATE Qt${QT_VERSION_MAJOR}::Core Qt${QT_VERSION_MAJOR}::Sql)

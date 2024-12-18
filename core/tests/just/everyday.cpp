@@ -4,6 +4,7 @@
 
 #include "rinexnamegenerator.h"
 #include "rinexreader.h"
+#include "pdp.h"
 
 int main(int argc, char *argv[])
 {
@@ -49,5 +50,8 @@ int main(int argc, char *argv[])
 
     // rr.saveAsCSV(pathCSVobs, RinexType::OBSERVATION);
     // rr.saveAsCSV(pathCSVnav, RinexType::NAVIGATION);
+
+    rr::Pdp pdp(1, "Барановичи", "BARA", {25.973639, 53.083056, 0});
+    std::cout << pdp;
     //==============================================================================
 }

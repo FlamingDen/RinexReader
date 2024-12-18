@@ -1,7 +1,7 @@
-#ifndef ENUMTYPES_H
-#define ENUMTYPES_H
+#pragma once
 
 #include <QString>
+
 namespace rr
 {
     enum class RinexType
@@ -32,4 +32,4 @@ namespace rr
     SatelliteSystem getSatelliteSystem(QString sys);
 }
 
-#endif // ENUMTYPES_H
+

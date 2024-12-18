@@ -19,7 +19,10 @@ QString rr::getSatelliteSystemShort(SatelliteSystem s)
     return {};
 }
 
-QString rr::getSatelliteSystemShort(int s){ return getSatelliteSystemShort(static_cast<SatelliteSystem>(s));}
+QString rr::getSatelliteSystemShort(int s){
+    return getSatelliteSystemShort(static_cast<SatelliteSystem>(s));
+}
+
 
 QString rr::getSatelliteSystem(SatelliteSystem s)
 {
@@ -42,7 +45,9 @@ QString rr::getSatelliteSystem(SatelliteSystem s)
     return {};
 }
 
-QString rr::getSatelliteSystem(int s){ return getSatelliteSystem(static_cast<SatelliteSystem>(s));}
+QString rr::getSatelliteSystem(int s){
+    return getSatelliteSystem(static_cast<SatelliteSystem>(s));
+}
 
 rr::SatelliteSystem rr::getSatelliteSystem(QString sys)
 {

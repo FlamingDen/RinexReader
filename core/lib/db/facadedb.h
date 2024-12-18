@@ -4,6 +4,8 @@
 #include <QObject>
 #include <QtSql>
 
+#include "pdp.h"
+
 class FacadeDB : public QObject
 {
 protected:
@@ -15,6 +17,8 @@ public:
     FacadeDB(FacadeDB &other) = delete;
     void operator= (const FacadeDB &) = delete;
     static FacadeDB* getInstance();
+
+    
 
     /*Satellite
      *code - обозначение спутника например 'G05' , 'E08' и т.д.

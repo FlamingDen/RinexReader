@@ -1,0 +1,7 @@
+﻿project(RinexTests_Coordinates LANGUAGES CXX)
+
+add_executable(RinexTests_Coordinates
+    coord.cpp
+)
+
+target_link_libraries(RinexTests_Coordinates PRIVATE Qt${QT_VERSION_MAJOR}::Core Qt${QT_VERSION_MAJOR}::Sql RinexReader)
