@@ -44,6 +44,9 @@ add_library(RinexReader
 
     core/lib/models/pdp.h
     core/lib/models/pdp.cpp
+    core/lib/models/condb.h
+    core/lib/models/condb.cpp
+    
 
     core/lib/db/facadedb.h
     core/lib/db/facadedb.cpp

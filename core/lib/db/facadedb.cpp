@@ -17,7 +17,6 @@ FacadeDB* FacadeDB::getInstance()
     return facade_db;
 }
 
-
 //====================================Satellites=========================================
 bool FacadeDB::addSatellite(QString prn)
 {

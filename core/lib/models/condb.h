@@ -8,7 +8,7 @@ namespace rr
 {
     class ConDb{
     private:
-        static ConDb* con_db;
+        static rr::ConDb* con_db;
         QSqlDatabase database;
 
         const QString DRIVER = "QPSQL";
@@ -26,14 +26,17 @@ namespace rr
         
     public:
         ConDb(const ConDb& other) = delete;
-        void operator=(const ConDb& other) = delete;
-        static ConDb* GetInstance();
+        void operator=(const ConDb&) = delete;
+        static rr::ConDb* GetInstance();
 
         QSqlDatabase getDatabase() const;
 
         /*
         */
-        rr::Pdp GetPdp(QString identifige_name_);
-        QHash<QString, rr::Pdp> GetPdpAll();
+        rr::Pdp GetPdp(const QString &identifige_name_) const;
+
+        QHash<QString, rr::Pdp> GetPdpAll() const;
+
+        bool IsExist(const QString &identifige_name_) const ;
     };
 } // namespace rr
